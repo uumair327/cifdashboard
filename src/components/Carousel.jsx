@@ -15,12 +15,14 @@ const CarouselItem = ({ carouselItem, setCarouselItems, carouselItems }) => {
   };
 
   return (
-    <div className="bg-neutral-700 p-4 rounded flex flex-col gap-4">
-      <a
-        href={carouselItem.link}
-        className=""
-      >{`Link: ${carouselItem.link}`}</a>
-      <img className="w-[400px]" src={carouselItem.imageUrl} />
+    <div className="bg-neutral-700 p-4 rounded flex flex-col gap-4 items-center max-w-[80%]">
+      <div className="flex gap-2 w-[80%]">
+        <p className=" font-bold">Link:</p>
+        <a href={carouselItem.link} className="">
+          {carouselItem.link}
+        </a>
+      </div>
+      <img className="w-[400px] rounded" src={carouselItem.imageUrl} />
       <button
         className="bg-red-600 px-4 py-2 rounded self-start"
         onClick={() => handleDeleteItem(item.id)}
