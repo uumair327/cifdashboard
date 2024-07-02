@@ -69,12 +69,11 @@ const Carousel = () => {
     <div className="mb-12">
       <div className="flex justify-between">
         <h2 className="text-3xl mb-4">Carousel Items</h2>
-        <button
-          className="bg-green-600 rounded py-2 px-4 text-xl mb-4"
-          onClick={handleAddItem}
-        >
-          Add Item
-        </button>
+      </div>
+      <div>
+        <div>Add Carousel Item</div>
+        <input/>
+        
       </div>
       <div className="flex flex-wrap gap-8 justify-center">
         {carouselItems.map((item, index) => (
