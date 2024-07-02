@@ -1,5 +1,6 @@
 {
   "name": "myapp",
+  "homepage": "cifdashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
