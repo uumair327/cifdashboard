@@ -9,6 +9,7 @@ import { logoutGoogle } from "../firebaseAuth";
 const Sidebar = lazy(() => import("../components/Sidebar"));
 const Displayer = lazy(() => import("../components/Displayer"));
 const Adder = lazy(() => import("../components/Adder"));
+const QuizManager = lazy(() => import("../components/QuizManager"));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-full">
@@ -42,6 +43,27 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, [navigate]);
+
+  const renderContent = () => {
+    if (selectedCollectionName === 'quizes' || selectedCollectionName === 'quiz_questions') {
+      return <QuizManager />;
+    }
+
+    return (
+      <>
+        <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Adder collectionName={selectedCollectionName} />
+          </Suspense>
+        </div>
+        <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Displayer collectionName={selectedCollectionName} />
+          </Suspense>
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-white">
@@ -86,16 +108,7 @@ const App: React.FC = () => {
           <div className="h-full p-4 overflow-y-auto">
             <div className="max-w-7xl mx-auto">
               <div className="grid gap-6">
-                <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Adder collectionName={selectedCollectionName} />
-                  </Suspense>
-                </div>
-                <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Displayer collectionName={selectedCollectionName} />
-                  </Suspense>
-                </div>
+                {renderContent()}
               </div>
             </div>
           </div>
