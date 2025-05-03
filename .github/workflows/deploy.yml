@@ -55,6 +55,17 @@ jobs:
           find dist -type l
           echo "Checking total size:"
           du -sh dist/
+          echo "Checking file types:"
+          find dist -type f -exec file {} \;
+
+      - name: Clean build output
+        run: |
+          # Remove any potential symlinks
+          find dist -type l -delete
+          # Remove source maps
+          find dist -name "*.map" -delete
+          # Remove any hidden files
+          find dist -name ".*" -delete
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
