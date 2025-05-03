@@ -47,6 +47,15 @@ jobs:
       - name: Build with Vite
         run: npm run build
 
+      - name: Debug build output
+        run: |
+          echo "Listing dist directory contents:"
+          ls -la dist/
+          echo "Checking for symlinks:"
+          find dist -type l
+          echo "Checking total size:"
+          du -sh dist/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
