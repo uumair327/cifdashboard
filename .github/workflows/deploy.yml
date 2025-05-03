@@ -42,48 +42,10 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install terser@latest
+        run: npm install
 
       - name: Build with Vite
         run: npm run build
-
-      - name: Debug build output
-        run: |
-          echo "Listing dist directory contents:"
-          ls -la dist/
-          echo "Checking for symlinks:"
-          find dist -type l
-          echo "Checking total size:"
-          du -sh dist/
-          echo "Checking file types:"
-          find dist -type f -exec file {} \;
-
-      - name: Clean build output
-        run: |
-          # Remove any potential symlinks
-          find dist -type l -delete
-          # Remove source maps
-          find dist -name "*.map" -delete
-          # Remove any hidden files
-          find dist -name ".*" -delete
-          # Remove any empty directories
-          find dist -type d -empty -delete
-          # Ensure proper permissions
-          chmod -R 755 dist
-
-      - name: Create deployment package
-        run: |
-          # Create a new directory for deployment
-          mkdir -p deploy
-          # Copy only necessary files
-          cp -r dist/* deploy/
-          # Remove any remaining problematic files
-          find deploy -type f -name "*.map" -delete
-          find deploy -type f -name "*.d.ts" -delete
-          find deploy -type f -name "*.ts" -delete
-          find deploy -type f -name "*.tsx" -delete
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
