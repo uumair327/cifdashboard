@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pages
+          name: github-pages
           path: ./dist
           retention-days: 1
 
