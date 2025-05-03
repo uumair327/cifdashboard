@@ -47,40 +47,26 @@ jobs:
       - name: Build with Vite
         run: npm run build
 
-      - name: Clean build output
+      - name: Prepare deployment
         run: |
-          echo "Cleaning build output..."
-          # Remove any potential symlinks
-          find ./dist -type l -delete
-          # Remove source maps
-          find ./dist -name "*.map" -delete
-          # Remove any hidden files
-          find ./dist -name ".*" -delete
-          # Remove any empty directories
-          find ./dist -type d -empty -delete
-          # Ensure proper permissions
-          chmod -R 755 ./dist
-          echo "Build output cleaned successfully"
-
-      - name: Create deployment package
-        run: |
-          echo "Creating deployment package..."
           # Create a new directory for deployment
-          mkdir -p deploy
-          # Copy files without preserving symlinks
-          cp -r --no-dereference ./dist/* deploy/
-          # Remove any remaining problematic files
+          rm -rf deploy
+          mkdir deploy
+          # Copy only the necessary files
+          cp -r dist/* deploy/
+          # Remove any problematic files
           find deploy -type f -name "*.map" -delete
           find deploy -type f -name "*.d.ts" -delete
           find deploy -type f -name "*.ts" -delete
           find deploy -type f -name "*.tsx" -delete
-          echo "Deployment package created successfully"
+          # Ensure proper permissions
+          chmod -R 755 deploy
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: ./deploy
+          path: deploy
           retention-days: 1
 
   # Deployment job
@@ -91,6 +77,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: deploy
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
