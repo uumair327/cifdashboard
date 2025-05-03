@@ -63,7 +63,7 @@ jobs:
           chmod -R 755 deploy
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: deploy
 
