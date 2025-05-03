@@ -66,6 +66,22 @@ jobs:
           find dist -name "*.map" -delete
           # Remove any hidden files
           find dist -name ".*" -delete
+          # Remove any empty directories
+          find dist -type d -empty -delete
+          # Ensure proper permissions
+          chmod -R 755 dist
+
+      - name: Create deployment package
+        run: |
+          # Create a new directory for deployment
+          mkdir -p deploy
+          # Copy only necessary files
+          cp -r dist/* deploy/
+          # Remove any remaining problematic files
+          find deploy -type f -name "*.map" -delete
+          find deploy -type f -name "*.d.ts" -delete
+          find deploy -type f -name "*.ts" -delete
+          find deploy -type f -name "*.tsx" -delete
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
