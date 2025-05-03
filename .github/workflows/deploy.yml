@@ -47,13 +47,37 @@ jobs:
       - name: Build with Vite
         run: npm run build
 
+      - name: Validate build output
+        run: |
+          echo "Checking for symbolic links:"
+          find ./dist -type l && echo "Error: Symbolic links found in the build output" && exit 1
+          echo "Checking directory size:"
+          du -sh ./dist
+          echo "Checking file types:"
+          find ./dist -type f -exec file {} \;
+
+      - name: Clean build output
+        run: |
+          # Remove any potential symlinks
+          find ./dist -type l -delete
+          # Remove source maps
+          find ./dist -name "*.map" -delete
+          # Remove any hidden files
+          find ./dist -name ".*" -delete
+          # Remove any empty directories
+          find ./dist -type d -empty -delete
+          # Ensure proper permissions
+          chmod -R 755 ./dist
+
+      - name: Compress artifact
+        run: tar -czf dist.tar.gz -C ./dist .
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: ./dist
+          path: ./dist.tar.gz
           retention-days: 1
-          compression-level: 0
 
   # Deployment job
   deploy:
@@ -67,7 +91,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: github-pages
-          path: ./dist
+          path: ./dist.tar.gz
+
+      - name: Extract artifact
+        run: |
+          mkdir -p ./dist
+          tar -xzf ./dist.tar.gz -C ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
