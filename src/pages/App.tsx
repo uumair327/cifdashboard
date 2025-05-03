@@ -1,73 +1,105 @@
-import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
-import Displayer from "../components/Displayer";
-import Adder from "../components/Adder";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
-import { LuLogOut } from "react-icons/lu";
+import { LuLogOut, LuMenu } from "react-icons/lu";
 import { logoutGoogle } from "../firebaseAuth";
 
-const App: React.FC = () => {
-  const [selectedCollectionName, setSelectedCollectionName] =
-    useState<string>("carousel_items");
+// Lazy load components
+const Sidebar = lazy(() => import("../components/Sidebar"));
+const Displayer = lazy(() => import("../components/Displayer"));
+const Adder = lazy(() => import("../components/Adder"));
 
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-full">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+const App: React.FC = () => {
+  const [selectedCollectionName, setSelectedCollectionName] = useState<string>("carousel_items");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const navigate = useNavigate();
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      setIsSidebarOpen(!mobile);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user == null) {
         navigate("/login");
       }
     });
-  }, []);
 
-  const isMobile = () => window.innerWidth <= 768;
+    return () => unsubscribe();
+  }, [navigate]);
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="p-4 bg-slate-900 h-[10%] flex justify-between items-center">
-        <div className="text-3xl">CIF Guardian Care</div>
-        <button onClick={() => logoutGoogle()} className="flex items-center gap-4 bg-slate-800 px-4 py-2 rounded text-xl hover:scale-[1.02] hover:-translate-y-1 duration-300">
-          <LuLogOut/>
-          <span>Logout</span>
-        </button>
-      </div>
-      <div
-        className={`p-4 max-md:p-2 flex ${
-          isMobile() ? "flex-col" : "flex-row"
-        } justify-between h-[90%] gap-4 max-md:gap-2`}
-      >
-        {isMobile() ? (
-          <>
-            <Sidebar
-              selectedCollectionName={selectedCollectionName}
-              setSelectedCollectionName={setSelectedCollectionName}
-            />
-            <div className="flex-[0.5] flex-grow overflow-y-auto">
-              <div className="flex flex-col gap-4">
-                <Adder collectionName={selectedCollectionName} />
-                <Displayer collectionName={selectedCollectionName} />
-              </div>
+    <div className="h-screen flex flex-col bg-slate-950 text-white">
+      <header className="p-4 bg-slate-900 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            {isMobile && (
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <LuMenu size={24} />
+              </button>
+            )}
+            <h1 className="text-2xl font-bold">CIF Guardian Care</h1>
+          </div>
+          <button
+            onClick={() => logoutGoogle()}
+            className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            <LuLogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
+        {isSidebarOpen && (
+          <div className={`${isMobile ? 'fixed inset-0 z-40' : 'w-64'} bg-slate-900 border-r border-slate-800`}>
+            <div className="p-4">
+              <Suspense fallback={<LoadingSpinner />}>
+                <Sidebar
+                  selectedCollectionName={selectedCollectionName}
+                  setSelectedCollectionName={setSelectedCollectionName}
+                />
+              </Suspense>
             </div>
-          </>
-        ) : (
-          <>
-            <Sidebar
-              selectedCollectionName={selectedCollectionName}
-              setSelectedCollectionName={setSelectedCollectionName}
-            />
-            <div className="flex-[0.7] bg-slate-900 p-4 rounded h-full flex gap-4">
-              <div className="flex-[0.5]">
-                <Adder collectionName={selectedCollectionName} />
-              </div>
-              <div className="h-full w-[2px] bg-slate-800" />
-              <div className="flex-[0.5] overflow-y-auto">
-                <Displayer collectionName={selectedCollectionName} />
-              </div>
-            </div>
-          </>
+          </div>
         )}
+
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full p-4 overflow-y-auto">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid gap-6">
+                <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Adder collectionName={selectedCollectionName} />
+                  </Suspense>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-6 shadow-lg">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Displayer collectionName={selectedCollectionName} />
+                  </Suspense>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -13,16 +13,18 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <Login/>
+    element: <Login />
   },
   {
     path: "/register",
-    element: <Register/>
+    element: <Register />
   }
-])
+], {
+  basename: '/cifdashboard'
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router}/>
+    <RouterProvider router={router} />
   </React.StrictMode>,
 )
