@@ -42,7 +42,9 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install terser@latest
 
       - name: Build with Vite
         run: npm run build
