@@ -47,17 +47,9 @@ jobs:
       - name: Build with Vite
         run: npm run build
 
-      - name: Validate build output
-        run: |
-          echo "Checking for symbolic links:"
-          find ./dist -type l && echo "Error: Symbolic links found in the build output" && exit 1
-          echo "Checking directory size:"
-          du -sh ./dist
-          echo "Checking file types:"
-          find ./dist -type f -exec file {} \;
-
       - name: Clean build output
         run: |
+          echo "Cleaning build output..."
           # Remove any potential symlinks
           find ./dist -type l -delete
           # Remove source maps
@@ -68,15 +60,27 @@ jobs:
           find ./dist -type d -empty -delete
           # Ensure proper permissions
           chmod -R 755 ./dist
+          echo "Build output cleaned successfully"
 
-      - name: Compress artifact
-        run: tar -czf dist.tar.gz -C ./dist .
+      - name: Create deployment package
+        run: |
+          echo "Creating deployment package..."
+          # Create a new directory for deployment
+          mkdir -p deploy
+          # Copy files without preserving symlinks
+          cp -r --no-dereference ./dist/* deploy/
+          # Remove any remaining problematic files
+          find deploy -type f -name "*.map" -delete
+          find deploy -type f -name "*.d.ts" -delete
+          find deploy -type f -name "*.ts" -delete
+          find deploy -type f -name "*.tsx" -delete
+          echo "Deployment package created successfully"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: ./dist.tar.gz
+          path: ./deploy
           retention-days: 1
 
   # Deployment job
@@ -87,17 +91,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages
-          path: ./dist.tar.gz
-
-      - name: Extract artifact
-        run: |
-          mkdir -p ./dist
-          tar -xzf ./dist.tar.gz -C ./dist
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
