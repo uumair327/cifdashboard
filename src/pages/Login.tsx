@@ -24,6 +24,14 @@ const Login = () => {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Check if popups are blocked
+      const popupBlocked = window.open('about:blank', '_blank');
+      if (!popupBlocked) {
+        throw new Error('Please allow popups for this website');
+      }
+      popupBlocked.close();
+
       const user = await loginWithGoogle();
       if (user != null) {
         navigate("/");
