@@ -16,9 +16,8 @@ const SideBarCard: React.FC<SideBarCardProps> = ({
   return (
     <div
       onClick={() => setSelectedCollectionName(collection)}
-      className={`${
-        collection === selectedCollectionName ? "bg-slate-700" : "bg-slate-800"
-      } p-4 max-md:p-2 rounded cursor-pointer`}
+      className={`${collection === selectedCollectionName ? "bg-slate-700" : "bg-slate-800"
+        } p-4 max-md:p-2 rounded cursor-pointer`}
     >
       <div className="text-2xl max-md:text-lg">{name}</div>
     </div>
@@ -58,14 +57,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedCollectionName, setSelectedCo
         setSelectedCollectionName={setSelectedCollectionName}
       />
       <SideBarCard
-        name="Quizes"
-        collection="quizes"
-        selectedCollectionName={selectedCollectionName}
-        setSelectedCollectionName={setSelectedCollectionName}
-      />
-      <SideBarCard
-        name="Quiz Question"
-        collection="quiz_questions"
+        name="Quiz"
+        collection="quiz"
         selectedCollectionName={selectedCollectionName}
         setSelectedCollectionName={setSelectedCollectionName}
       />

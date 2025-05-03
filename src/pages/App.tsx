@@ -9,7 +9,7 @@ import { logoutGoogle } from "../firebaseAuth";
 const Sidebar = lazy(() => import("../components/Sidebar"));
 const Displayer = lazy(() => import("../components/Displayer"));
 const Adder = lazy(() => import("../components/Adder"));
-const QuizManager = lazy(() => import("../components/QuizManager"));
+const QuizManager = lazy(() => import("../components/QuizManager").catch(() => ({ default: () => <div>Error loading Quiz Manager</div> })));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-full">
@@ -45,8 +45,12 @@ const App: React.FC = () => {
   }, [navigate]);
 
   const renderContent = () => {
-    if (selectedCollectionName === 'quizes' || selectedCollectionName === 'quiz_questions') {
-      return <QuizManager />;
+    if (selectedCollectionName === 'quiz') {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <QuizManager />
+        </Suspense>
+      );
     }
 
     return (

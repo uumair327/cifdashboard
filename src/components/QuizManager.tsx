@@ -18,32 +18,59 @@ interface QuizQuestion {
     options: string[];
     correctOptionIndex: number;
     category: string;
+    explanation: string;
 }
 
 const QuizManager: React.FC = () => {
     const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
     const [isAddingQuiz, setIsAddingQuiz] = useState(false);
     const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
     const [newQuiz, setNewQuiz] = useState({ name: '', thumbnail: '', use: true });
     const [newQuestion, setNewQuestion] = useState({
         quiz: '',
         question: '',
         options: ['', '', '', ''],
         correctOptionIndex: 0,
-        category: ''
+        category: '',
+        explanation: ''
     });
+    const [error, setError] = useState<string | null>(null);
 
-    const { data: quizzes, loading: quizzesLoading, refetch: refetchQuizzes } = useCollectionData('quizes');
-    const { data: questions, loading: questionsLoading, refetch: refetchQuestions } = useCollectionData('quiz_questions');
+    const { data: oldQuizzes, loading: oldQuizzesLoading, error: oldQuizzesError, refetch: refetchOldQuizzes } = useCollectionData('quizes');
+    const { data: newQuizzes, loading: newQuizzesLoading, error: newQuizzesError, refetch: refetchNewQuizzes } = useCollectionData('quiz');
+    const { data: questions, loading: questionsLoading, error: questionsError, refetch: refetchQuestions } = useCollectionData('quiz_questions');
 
-    const filteredQuestions = questions?.filter(q => q.quiz === selectedQuiz) || [];
+    // Combine old and new quizzes
+    const quizzes = [...(oldQuizzes || []), ...(newQuizzes || [])];
+    const quizzesLoading = oldQuizzesLoading || newQuizzesLoading;
+    const quizzesError = oldQuizzesError || newQuizzesError;
+
+    // Get the selected quiz name
+    const selectedQuizName = selectedQuiz ? quizzes.find(q => q.id === selectedQuiz)?.name : null;
+
+    // Filter questions based on the selected quiz name
+    const filteredQuestions = selectedQuizName
+        ? questions?.filter(q => q.quiz === selectedQuizName) || []
+        : [];
+
+    console.log('Selected Quiz:', selectedQuiz);
+    console.log('Selected Quiz Name:', selectedQuizName);
+    console.log('All Questions:', questions);
+    console.log('Filtered Questions:', filteredQuestions);
+
+    useEffect(() => {
+        if (quizzesError || questionsError) {
+            setError(quizzesError?.message || questionsError?.message || 'An error occurred');
+        }
+    }, [quizzesError, questionsError]);
 
     const handleAddQuiz = async () => {
         try {
-            await addDoc(collection(db, 'quizes'), newQuiz);
+            await addDoc(collection(db, 'quiz'), newQuiz);
             setNewQuiz({ name: '', thumbnail: '', use: true });
             setIsAddingQuiz(false);
-            refetchQuizzes();
+            refetchNewQuizzes();
         } catch (error) {
             console.error('Error adding quiz:', error);
         }
@@ -51,21 +78,27 @@ const QuizManager: React.FC = () => {
 
     const handleAddQuestion = async () => {
         try {
+            if (!selectedQuizName) {
+                setError('No quiz selected');
+                return;
+            }
             await addDoc(collection(db, 'quiz_questions'), {
                 ...newQuestion,
-                quiz: selectedQuiz
+                quiz: selectedQuizName
             });
             setNewQuestion({
                 quiz: '',
                 question: '',
                 options: ['', '', '', ''],
                 correctOptionIndex: 0,
-                category: ''
+                category: '',
+                explanation: ''
             });
             setIsAddingQuestion(false);
             refetchQuestions();
         } catch (error) {
             console.error('Error adding question:', error);
+            setError('Failed to add question');
         }
     };
 
@@ -76,9 +109,20 @@ const QuizManager: React.FC = () => {
                 const quizQuestions = questions?.filter(q => q.quiz === quizzes.find(q => q.id === quizId)?.name) || [];
                 await Promise.all(quizQuestions.map(q => deleteDoc(doc(db, 'quiz_questions', q.id))));
 
-                // Delete the quiz
-                await deleteDoc(doc(db, 'quizes', quizId));
-                refetchQuizzes();
+                // Delete the quiz from both collections
+                try {
+                    await deleteDoc(doc(db, 'quiz', quizId));
+                } catch (e) {
+                    console.log('Not found in quiz collection, trying quizes collection');
+                }
+                try {
+                    await deleteDoc(doc(db, 'quizes', quizId));
+                } catch (e) {
+                    console.log('Not found in quizes collection');
+                }
+
+                refetchOldQuizzes();
+                refetchNewQuizzes();
                 refetchQuestions();
                 if (selectedQuiz === quizId) {
                     setSelectedQuiz(null);
@@ -91,16 +135,98 @@ const QuizManager: React.FC = () => {
 
     const handleToggleQuiz = async (quiz: Quiz) => {
         try {
-            await updateDoc(doc(db, 'quizes', quiz.id), {
-                use: !quiz.use
-            });
-            refetchQuizzes();
+            // Try to update in the new collection first
+            try {
+                await updateDoc(doc(db, 'quiz', quiz.id), {
+                    use: !quiz.use
+                });
+            } catch (e) {
+                // If not found in new collection, try the old one
+                await updateDoc(doc(db, 'quizes', quiz.id), {
+                    use: !quiz.use
+                });
+            }
+            refetchOldQuizzes();
+            refetchNewQuizzes();
         } catch (error) {
             console.error('Error toggling quiz:', error);
         }
     };
 
-    if (quizzesLoading || questionsLoading) {
+    const handleEditQuestion = (question: QuizQuestion) => {
+        setEditingQuestion(question);
+        setNewQuestion({
+            quiz: question.quiz,
+            question: question.question,
+            options: [...question.options],
+            correctOptionIndex: question.correctOptionIndex,
+            category: question.category,
+            explanation: question.explanation || ''
+        });
+    };
+
+    const handleUpdateQuestion = async () => {
+        if (!editingQuestion) return;
+
+        try {
+            await updateDoc(doc(db, 'quiz_questions', editingQuestion.id), {
+                question: newQuestion.question,
+                options: newQuestion.options,
+                correctOptionIndex: newQuestion.correctOptionIndex,
+                category: newQuestion.category,
+                explanation: newQuestion.explanation
+            });
+
+            setEditingQuestion(null);
+            setNewQuestion({
+                quiz: '',
+                question: '',
+                options: ['', '', '', ''],
+                correctOptionIndex: 0,
+                category: '',
+                explanation: ''
+            });
+            refetchQuestions();
+        } catch (error) {
+            console.error('Error updating question:', error);
+            setError('Failed to update question');
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingQuestion(null);
+        setNewQuestion({
+            quiz: '',
+            question: '',
+            options: ['', '', '', ''],
+            correctOptionIndex: 0,
+            category: '',
+            explanation: ''
+        });
+    };
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="bg-red-500 text-white p-4 rounded-lg">
+                    Error: {error}
+                    <button
+                        onClick={() => {
+                            setError(null);
+                            refetchOldQuizzes();
+                            refetchNewQuizzes();
+                            refetchQuestions();
+                        }}
+                        className="ml-4 px-2 py-1 bg-white text-red-500 rounded"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (quizzesLoading) {
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -224,9 +350,9 @@ const QuizManager: React.FC = () => {
                         </button>
                     </div>
 
-                    {isAddingQuestion && (
+                    {(isAddingQuestion || editingQuestion) && (
                         <div className="mb-6 p-4 bg-slate-700 rounded-lg">
-                            <h3 className="text-xl mb-4">Add New Question</h3>
+                            <h3 className="text-xl mb-4">{editingQuestion ? 'Edit Question' : 'Add New Question'}</h3>
                             <div className="space-y-4">
                                 <input
                                     type="text"
@@ -240,6 +366,12 @@ const QuizManager: React.FC = () => {
                                     placeholder="Category"
                                     value={newQuestion.category}
                                     onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
+                                    className="w-full p-2 rounded bg-slate-600"
+                                />
+                                <textarea
+                                    placeholder="Explanation (optional)"
+                                    value={newQuestion.explanation}
+                                    onChange={(e) => setNewQuestion({ ...newQuestion, explanation: e.target.value })}
                                     className="w-full p-2 rounded bg-slate-600"
                                 />
                                 <div className="space-y-2">
@@ -267,14 +399,14 @@ const QuizManager: React.FC = () => {
                                 </div>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={handleAddQuestion}
+                                        onClick={editingQuestion ? handleUpdateQuestion : handleAddQuestion}
                                         className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
                                     >
                                         <FiCheck />
-                                        Save
+                                        {editingQuestion ? 'Update' : 'Save'}
                                     </button>
                                     <button
-                                        onClick={() => setIsAddingQuestion(false)}
+                                        onClick={editingQuestion ? handleCancelEdit : () => setIsAddingQuestion(false)}
                                         className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
                                     >
                                         <FiX />
@@ -292,9 +424,7 @@ const QuizManager: React.FC = () => {
                                     <h3 className="text-lg font-semibold">{question.question}</h3>
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => {
-                                                // TODO: Implement edit functionality
-                                            }}
+                                            onClick={() => handleEditQuestion(question)}
                                             className="p-2 rounded bg-blue-500 hover:bg-blue-600"
                                         >
                                             <FiEdit2 />
@@ -313,13 +443,16 @@ const QuizManager: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-sm text-slate-400 mb-2">Category: {question.category}</div>
+                                {question.explanation && (
+                                    <div className="text-sm text-slate-400 mb-2">Explanation: {question.explanation}</div>
+                                )}
                                 <div className="space-y-2">
                                     {question.options.map((option, index) => (
                                         <div
                                             key={index}
                                             className={`p-2 rounded ${index === question.correctOptionIndex
-                                                    ? 'bg-green-500/20 border border-green-500'
-                                                    : 'bg-slate-600'
+                                                ? 'bg-green-500/20 border border-green-500'
+                                                : 'bg-slate-600'
                                                 }`}
                                         >
                                             {option}
