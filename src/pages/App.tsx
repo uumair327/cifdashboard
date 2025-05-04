@@ -13,8 +13,9 @@ const Adder = lazy(() => import("../components/Adder"));
 const QuizManager = lazy(() => import("../components/QuizManager").catch(() => ({ default: () => <div>Error loading Quiz Manager</div> })));
 
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-full">
+  <div className="flex items-center justify-center h-full min-h-[200px]">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <span className="sr-only">Loading...</span>
   </div>
 );
 
@@ -56,31 +57,32 @@ const App: React.FC = () => {
     }
 
     return (
-      <>
-        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg">
+      <div className="space-y-4 md:space-y-6">
+        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg transition-all duration-300 hover:shadow-xl">
           <Suspense fallback={<LoadingSpinner />}>
             <Adder collectionName={selectedCollectionName} />
           </Suspense>
         </div>
-        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg">
+        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg transition-all duration-300 hover:shadow-xl">
           <Suspense fallback={<LoadingSpinner />}>
             <Displayer collectionName={selectedCollectionName} />
           </Suspense>
         </div>
-      </>
+      </div>
     );
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
-      <header className="p-3 md:p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+    <div className="h-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
+      <header className="p-3 md:p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-4">
             {isMobile && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 ease-in-out active:scale-95"
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 ease-in-out active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Toggle menu"
+                aria-expanded={isSidebarOpen}
               >
                 {isSidebarOpen ? <LuX size={24} /> : <LuMenu size={24} />}
               </button>
@@ -90,14 +92,14 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 md:gap-4">
             <button
               onClick={toggleTheme}
-              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               {theme === 'light' ? <LuMoon size={20} /> : <LuSun size={20} />}
             </button>
             <button
               onClick={() => logoutGoogle()}
-              className="flex items-center gap-1 md:gap-2 bg-slate-200 dark:bg-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors text-sm md:text-base"
+              className="flex items-center gap-1 md:gap-2 bg-slate-200 dark:bg-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <LuLogOut size={16} className="md:size-5" />
               <span>Logout</span>

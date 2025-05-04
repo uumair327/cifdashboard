@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Login from './pages/Login.tsx'
 import Register from './pages/Register.tsx'
+import { ToastProvider } from './context/ToastContext'
 
 const router = createBrowserRouter([
   {
@@ -27,7 +28,9 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </ThemeProvider>
   </React.StrictMode>,
 )

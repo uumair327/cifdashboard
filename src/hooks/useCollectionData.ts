@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getDocs, collection, DocumentData, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { getDocs, collection, DocumentData, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface CacheItem {
@@ -100,6 +100,17 @@ export const useCollectionData = (collectionName: string) => {
     }
   };
 
+  const updateItem = async (id: string, newData: any) => {
+    try {
+      const itemRef = doc(db, collectionName, id);
+      await updateDoc(itemRef, newData);
+      // The real-time listener will handle the update
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to update item'));
+      throw err;
+    }
+  };
+
   useEffect(() => {
     isMounted.current = true;
     fetchData();
@@ -118,6 +129,7 @@ export const useCollectionData = (collectionName: string) => {
     loading, 
     error, 
     refetch: () => fetchData(true), 
-    deleteItem 
+    deleteItem,
+    updateItem,
   };
 }; 

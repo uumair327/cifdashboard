@@ -1,36 +1,107 @@
 import React, { useState, useCallback, memo } from "react";
 import { useCollectionData } from "../hooks/useCollectionData";
-import { FiRefreshCw, FiTrash2 } from "react-icons/fi";
+import { FiRefreshCw, FiTrash2, FiEdit2, FiCheck, FiX } from "react-icons/fi";
+import { useToast } from "../context/ToastContext";
 
 interface DisplayerProps {
   collectionName: string;
 }
 
-const ItemCard = memo(({ item, onDelete }: { item: any; onDelete: (id: string) => void }) => (
-  <div className="bg-slate-100 dark:bg-slate-800 rounded-lg shadow-lg overflow-hidden">
-    <div className="p-3 md:p-4">
-      {Object.entries(item).map(([key, value]) => (
-        key !== 'id' && (
-          <div key={key} className="mb-2 md:mb-3 last:mb-0">
-            <div className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-1">{key}</div>
-            <div className="text-sm md:text-base text-slate-900 dark:text-white break-words">
-              {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+const ItemCard = memo(({
+  item,
+  onDelete,
+  onUpdate
+}: {
+  item: any;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, data: any) => Promise<void>;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({ ...item });
+  const { addToast } = useToast();
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await onUpdate(item.id, editedData);
+      setIsEditing(false);
+      addToast("Item updated successfully!", "success");
+    } catch (error) {
+      addToast("Failed to update item. Please try again.", "error");
+    }
+  };
+
+  const handleCancel = () => {
+    setEditedData({ ...item });
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="bg-slate-100 dark:bg-slate-800 rounded-lg shadow-lg overflow-hidden">
+      <div className="p-3 md:p-4">
+        {Object.entries(isEditing ? editedData : item).map(([key, value]) => (
+          key !== 'id' && (
+            <div key={key} className="mb-2 md:mb-3 last:mb-0">
+              <div className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-1">{key}</div>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={String(value)}
+                  onChange={(e) => setEditedData({ ...editedData, [key]: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <div className="text-sm md:text-base text-slate-900 dark:text-white break-words">
+                  {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                </div>
+              )}
             </div>
-          </div>
-        )
-      ))}
+          )
+        ))}
+      </div>
+      <div className="bg-slate-200 dark:bg-slate-700 p-3 md:p-4 flex justify-end gap-2">
+        {isEditing ? (
+          <>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1 md:gap-2 bg-green-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded hover:bg-green-600 transition-colors text-sm md:text-base"
+            >
+              <FiCheck size={16} className="md:size-5" />
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1 md:gap-2 bg-slate-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded hover:bg-slate-600 transition-colors text-sm md:text-base"
+            >
+              <FiX size={16} className="md:size-5" />
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-1 md:gap-2 bg-blue-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded hover:bg-blue-600 transition-colors text-sm md:text-base"
+            >
+              <FiEdit2 size={16} className="md:size-5" />
+              Edit
+            </button>
+            <button
+              onClick={() => onDelete(item.id)}
+              className="flex items-center gap-1 md:gap-2 bg-red-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded hover:bg-red-600 transition-colors text-sm md:text-base"
+            >
+              <FiTrash2 size={16} className="md:size-5" />
+              Delete
+            </button>
+          </>
+        )}
+      </div>
     </div>
-    <div className="bg-slate-200 dark:bg-slate-700 p-3 md:p-4 flex justify-end">
-      <button
-        onClick={() => onDelete(item.id)}
-        className="flex items-center gap-1 md:gap-2 bg-red-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded hover:bg-red-600 transition-colors text-sm md:text-base"
-      >
-        <FiTrash2 size={16} className="md:size-5" />
-        Delete
-      </button>
-    </div>
-  </div>
-));
+  );
+});
 
 const DeleteModal = memo(({
   onConfirm,
@@ -62,7 +133,7 @@ const DeleteModal = memo(({
 ));
 
 const Displayer: React.FC<DisplayerProps> = ({ collectionName }) => {
-  const { data: collectionItems, loading, error, refetch, deleteItem } = useCollectionData(collectionName);
+  const { data: collectionItems, loading, error, refetch, deleteItem, updateItem } = useCollectionData(collectionName);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const handleDelete = useCallback((id: string) => {
@@ -115,6 +186,7 @@ const Displayer: React.FC<DisplayerProps> = ({ collectionName }) => {
             key={item.id}
             item={item}
             onDelete={handleDelete}
+            onUpdate={updateItem}
           />
         ))}
       </div>
