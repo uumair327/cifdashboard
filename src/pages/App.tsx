@@ -79,10 +79,10 @@ const App: React.FC = () => {
             {isMobile && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 ease-in-out active:scale-95"
                 aria-label="Toggle menu"
               >
-                {isSidebarOpen ? <LuX size={20} /> : <LuMenu size={20} />}
+                {isSidebarOpen ? <LuX size={24} /> : <LuMenu size={24} />}
               </button>
             )}
             <h1 className="text-xl md:text-2xl font-bold">CIF Guardian Care</h1>
@@ -110,7 +110,7 @@ const App: React.FC = () => {
         {/* Backdrop for mobile sidebar */}
         {isMobile && isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity duration-300 ease-in-out"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -118,7 +118,7 @@ const App: React.FC = () => {
         {/* Sidebar */}
         <div
           className={`
-            ${isMobile ? 'fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out' : 'w-64'} 
+            ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-64 transform transition-all duration-300 ease-in-out shadow-xl' : 'w-64'} 
             ${isMobile && !isSidebarOpen ? '-translate-x-full' : 'translate-x-0'}
             bg-slate-100 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
           `}
@@ -127,7 +127,12 @@ const App: React.FC = () => {
             <Suspense fallback={<LoadingSpinner />}>
               <Sidebar
                 selectedCollectionName={selectedCollectionName}
-                setSelectedCollectionName={setSelectedCollectionName}
+                setSelectedCollectionName={(collection) => {
+                  setSelectedCollectionName(collection);
+                  if (isMobile) {
+                    setIsSidebarOpen(false);
+                  }
+                }}
               />
             </Suspense>
           </div>
@@ -136,8 +141,8 @@ const App: React.FC = () => {
         {/* Main content */}
         <main className={`
           flex-1 overflow-auto p-3 md:p-4
-          ${isMobile && isSidebarOpen ? 'opacity-50 pointer-events-none' : ''}
-          transition-opacity duration-300 ease-in-out
+          ${isMobile && isSidebarOpen ? 'opacity-50 pointer-events-none blur-sm' : 'opacity-100 pointer-events-auto blur-0'}
+          transition-all duration-300 ease-in-out
         `}>
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             {renderContent()}
