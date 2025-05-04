@@ -235,14 +235,14 @@ const QuizManager: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
             {/* Quiz List Section */}
-            <div className="bg-slate-800 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">Quizzes</h2>
+            <div className="bg-slate-800 rounded-lg p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
+                    <h2 className="text-xl md:text-2xl font-bold">Quizzes</h2>
                     <button
                         onClick={() => setIsAddingQuiz(true)}
-                        className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors w-full md:w-auto"
                     >
                         <FiPlus />
                         Add Quiz
@@ -250,34 +250,34 @@ const QuizManager: React.FC = () => {
                 </div>
 
                 {isAddingQuiz && (
-                    <div className="mb-6 p-4 bg-slate-700 rounded-lg">
-                        <h3 className="text-xl mb-4">Add New Quiz</h3>
+                    <div className="mb-4 md:mb-6 p-4 bg-slate-700 rounded-lg">
+                        <h3 className="text-lg md:text-xl mb-4">Add New Quiz</h3>
                         <div className="space-y-4">
                             <input
                                 type="text"
                                 placeholder="Quiz Name"
                                 value={newQuiz.name}
                                 onChange={(e) => setNewQuiz({ ...newQuiz, name: e.target.value })}
-                                className="w-full p-2 rounded bg-slate-600"
+                                className="w-full p-2 rounded bg-slate-600 text-sm md:text-base"
                             />
                             <input
                                 type="text"
                                 placeholder="Thumbnail URL"
                                 value={newQuiz.thumbnail}
                                 onChange={(e) => setNewQuiz({ ...newQuiz, thumbnail: e.target.value })}
-                                className="w-full p-2 rounded bg-slate-600"
+                                className="w-full p-2 rounded bg-slate-600 text-sm md:text-base"
                             />
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleAddQuiz}
-                                    className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors text-sm md:text-base"
                                 >
                                     <FiCheck />
                                     Save
                                 </button>
                                 <button
                                     onClick={() => setIsAddingQuiz(false)}
-                                    className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors text-sm md:text-base"
                                 >
                                     <FiX />
                                     Cancel
@@ -287,35 +287,35 @@ const QuizManager: React.FC = () => {
                     </div>
                 )}
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {quizzes?.map((quiz: Quiz) => (
                         <div
                             key={quiz.id}
-                            className={`bg-slate-700 rounded-lg p-4 cursor-pointer transition-all ${selectedQuiz === quiz.id ? 'ring-2 ring-blue-500' : 'hover:bg-slate-600'
+                            className={`bg-slate-700 rounded-lg p-3 md:p-4 cursor-pointer transition-all ${selectedQuiz === quiz.id ? 'ring-2 ring-blue-500' : 'hover:bg-slate-600'
                                 }`}
                             onClick={() => setSelectedQuiz(quiz.id)}
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-semibold">{quiz.name}</h3>
+                                <h3 className="text-base md:text-xl font-semibold truncate">{quiz.name}</h3>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleToggleQuiz(quiz);
                                         }}
-                                        className={`p-2 rounded ${quiz.use ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                                        className={`p-1.5 md:p-2 rounded ${quiz.use ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
                                             }`}
                                     >
-                                        {quiz.use ? <FiCheck /> : <FiX />}
+                                        {quiz.use ? <FiCheck size={16} /> : <FiX size={16} />}
                                     </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteQuiz(quiz.id);
                                         }}
-                                        className="p-2 rounded bg-red-500 hover:bg-red-600"
+                                        className="p-1.5 md:p-2 rounded bg-red-500 hover:bg-red-600"
                                     >
-                                        <FiTrash2 />
+                                        <FiTrash2 size={16} />
                                     </button>
                                 </div>
                             </div>
@@ -323,10 +323,10 @@ const QuizManager: React.FC = () => {
                                 <img
                                     src={quiz.thumbnail}
                                     alt={quiz.name}
-                                    className="w-full h-32 object-cover rounded mb-2"
+                                    className="w-full h-24 md:h-32 object-cover rounded mb-2"
                                 />
                             )}
-                            <div className="text-sm text-slate-400">
+                            <div className="text-xs md:text-sm text-slate-400">
                                 {filteredQuestions.length} questions
                             </div>
                         </div>
@@ -336,129 +336,130 @@ const QuizManager: React.FC = () => {
 
             {/* Questions Section */}
             {selectedQuiz && (
-                <div className="bg-slate-800 rounded-lg p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold">
+                <div className="bg-slate-800 rounded-lg p-4 md:p-6">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
+                        <h2 className="text-xl md:text-2xl font-bold truncate">
                             Questions for {quizzes.find(q => q.id === selectedQuiz)?.name}
                         </h2>
                         <button
                             onClick={() => setIsAddingQuestion(true)}
-                            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                            className="flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors w-full md:w-auto"
                         >
                             <FiPlus />
                             Add Question
                         </button>
                     </div>
 
-                    {(isAddingQuestion || editingQuestion) && (
-                        <div className="mb-6 p-4 bg-slate-700 rounded-lg">
-                            <h3 className="text-xl mb-4">{editingQuestion ? 'Edit Question' : 'Add New Question'}</h3>
-                            <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder="Question"
-                                    value={newQuestion.question}
-                                    onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
-                                    className="w-full p-2 rounded bg-slate-600"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Category"
-                                    value={newQuestion.category}
-                                    onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
-                                    className="w-full p-2 rounded bg-slate-600"
-                                />
-                                <textarea
-                                    placeholder="Explanation (optional)"
-                                    value={newQuestion.explanation}
-                                    onChange={(e) => setNewQuestion({ ...newQuestion, explanation: e.target.value })}
-                                    className="w-full p-2 rounded bg-slate-600"
-                                />
-                                <div className="space-y-2">
-                                    {newQuestion.options.map((option, index) => (
-                                        <div key={index} className="flex gap-2">
-                                            <input
-                                                type="radio"
-                                                checked={newQuestion.correctOptionIndex === index}
-                                                onChange={() => setNewQuestion({ ...newQuestion, correctOptionIndex: index })}
-                                                className="mt-2"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder={`Option ${index + 1}`}
-                                                value={option}
-                                                onChange={(e) => {
-                                                    const newOptions = [...newQuestion.options];
-                                                    newOptions[index] = e.target.value;
-                                                    setNewQuestion({ ...newQuestion, options: newOptions });
-                                                }}
-                                                className="flex-1 p-2 rounded bg-slate-600"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={editingQuestion ? handleUpdateQuestion : handleAddQuestion}
-                                        className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
-                                    >
-                                        <FiCheck />
-                                        {editingQuestion ? 'Update' : 'Save'}
-                                    </button>
-                                    <button
-                                        onClick={editingQuestion ? handleCancelEdit : () => setIsAddingQuestion(false)}
-                                        className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                                    >
-                                        <FiX />
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {filteredQuestions.map((question: QuizQuestion) => (
-                            <div key={question.id} className="bg-slate-700 rounded-lg p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="text-lg font-semibold">{question.question}</h3>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEditQuestion(question)}
-                                            className="p-2 rounded bg-blue-500 hover:bg-blue-600"
-                                        >
-                                            <FiEdit2 />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this question?')) {
-                                                    deleteDoc(doc(db, 'quiz_questions', question.id));
-                                                    refetchQuestions();
-                                                }
-                                            }}
-                                            className="p-2 rounded bg-red-500 hover:bg-red-600"
-                                        >
-                                            <FiTrash2 />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="text-sm text-slate-400 mb-2">Category: {question.category}</div>
-                                {question.explanation && (
-                                    <div className="text-sm text-slate-400 mb-2">Explanation: {question.explanation}</div>
-                                )}
-                                <div className="space-y-2">
-                                    {question.options.map((option, index) => (
-                                        <div
-                                            key={index}
-                                            className={`p-2 rounded ${index === question.correctOptionIndex
-                                                ? 'bg-green-500/20 border border-green-500'
-                                                : 'bg-slate-600'
-                                                }`}
-                                        >
-                                            {option}
+                            <div key={question.id} className="bg-slate-700 rounded-lg p-3 md:p-4">
+                                {editingQuestion?.id === question.id ? (
+                                    <div className="space-y-3 md:space-y-4">
+                                        <h3 className="text-lg md:text-xl mb-3 md:mb-4">Edit Question</h3>
+                                        <input
+                                            type="text"
+                                            placeholder="Question"
+                                            value={newQuestion.question}
+                                            onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
+                                            className="w-full p-2 rounded bg-slate-600 text-sm md:text-base"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Category"
+                                            value={newQuestion.category}
+                                            onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
+                                            className="w-full p-2 rounded bg-slate-600 text-sm md:text-base"
+                                        />
+                                        <textarea
+                                            placeholder="Explanation (optional)"
+                                            value={newQuestion.explanation}
+                                            onChange={(e) => setNewQuestion({ ...newQuestion, explanation: e.target.value })}
+                                            className="w-full p-2 rounded bg-slate-600 text-sm md:text-base"
+                                            rows={3}
+                                        />
+                                        <div className="space-y-2">
+                                            {newQuestion.options.map((option, index) => (
+                                                <div key={index} className="flex gap-2 items-center">
+                                                    <input
+                                                        type="radio"
+                                                        checked={newQuestion.correctOptionIndex === index}
+                                                        onChange={() => setNewQuestion({ ...newQuestion, correctOptionIndex: index })}
+                                                        className="mt-0"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder={`Option ${index + 1}`}
+                                                        value={option}
+                                                        onChange={(e) => {
+                                                            const newOptions = [...newQuestion.options];
+                                                            newOptions[index] = e.target.value;
+                                                            setNewQuestion({ ...newQuestion, options: newOptions });
+                                                        }}
+                                                        className="flex-1 p-2 rounded bg-slate-600 text-sm md:text-base"
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleUpdateQuestion}
+                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors text-sm md:text-base"
+                                            >
+                                                <FiCheck />
+                                                Update
+                                            </button>
+                                            <button
+                                                onClick={handleCancelEdit}
+                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors text-sm md:text-base"
+                                            >
+                                                <FiX />
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-base md:text-lg font-semibold pr-4">{question.question}</h3>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleEditQuestion(question)}
+                                                    className="p-1.5 md:p-2 rounded bg-blue-500 hover:bg-blue-600"
+                                                >
+                                                    <FiEdit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('Are you sure you want to delete this question?')) {
+                                                            deleteDoc(doc(db, 'quiz_questions', question.id));
+                                                            refetchQuestions();
+                                                        }
+                                                    }}
+                                                    className="p-1.5 md:p-2 rounded bg-red-500 hover:bg-red-600"
+                                                >
+                                                    <FiTrash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs md:text-sm text-slate-400 mb-2">Category: {question.category}</div>
+                                        {question.explanation && (
+                                            <div className="text-xs md:text-sm text-slate-400 mb-2">Explanation: {question.explanation}</div>
+                                        )}
+                                        <div className="space-y-2">
+                                            {question.options.map((option, index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`p-2 rounded text-sm md:text-base ${index === question.correctOptionIndex
+                                                            ? 'bg-green-500/20 border border-green-500'
+                                                            : 'bg-slate-600'
+                                                        }`}
+                                                >
+                                                    {option}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ))}
                     </div>

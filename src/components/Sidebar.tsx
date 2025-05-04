@@ -16,10 +16,18 @@ const SideBarCard: React.FC<SideBarCardProps> = ({
   return (
     <div
       onClick={() => setSelectedCollectionName(collection)}
-      className={`${collection === selectedCollectionName ? "bg-slate-700" : "bg-slate-800"
-        } p-4 max-md:p-2 rounded cursor-pointer`}
+      className={`
+        ${collection === selectedCollectionName
+          ? "bg-slate-200 dark:bg-slate-700"
+          : "bg-slate-100 dark:bg-slate-800"
+        } 
+        p-3 md:p-4 rounded cursor-pointer 
+        transition-colors 
+        hover:bg-slate-200 dark:hover:bg-slate-700 
+        active:bg-slate-300 dark:active:bg-slate-600
+      `}
     >
-      <div className="text-2xl max-md:text-lg">{name}</div>
+      <div className="text-lg md:text-xl font-medium text-slate-900 dark:text-white">{name}</div>
     </div>
   );
 };
@@ -31,7 +39,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ selectedCollectionName, setSelectedCollectionName }) => {
   return (
-    <div className="flex-[0.3] flex flex-col gap-4 bg-slate-900 p-4 max-md:p-2 max-md:gap-2 rounded overflow-y-auto h-full">
+    <div className="flex flex-col gap-2 md:gap-4 overflow-y-auto h-full">
       <SideBarCard
         name="Carousel Items"
         collection="carousel_items"
