@@ -1,0 +1,5 @@
+# Collection feature hooks will be placed here
+# - useCollection
+# - useCollectionSearch
+# - useCollectionMutations
+# - useFieldVisibility

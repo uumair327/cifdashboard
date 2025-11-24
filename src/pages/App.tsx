@@ -1,15 +1,11 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../core/auth";
 import { LuLogOut, LuMenu, LuX, LuSun, LuMoon } from "react-icons/lu";
-import { logoutGoogle } from "../firebaseAuth";
 import { useTheme } from "../context/ThemeContext";
 
 // Lazy load components
 const Sidebar = lazy(() => import("../components/Sidebar"));
-const Displayer = lazy(() => import("../components/Displayer"));
-const Adder = lazy(() => import("../components/Adder"));
 const QuizManager = lazy(() => import("../components/QuizManager").catch(() => ({ default: () => <div>Error loading Quiz Manager</div> })));
 
 const LoadingSpinner = () => (
@@ -20,11 +16,16 @@ const LoadingSpinner = () => (
 );
 
 const App: React.FC = () => {
-  const [selectedCollectionName, setSelectedCollectionName] = useState<string>("carousel_items");
+  const [selectedCollectionName, setSelectedCollectionName] = useState<string>("quiz");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, loading, logout } = useAuth();
+  
+  // Check if we're on a new collection page route
+  const isNewCollectionRoute = location.pathname.match(/\/(carousel-items|home-images|forum|learn|quizes|videos)/);
 
   useEffect(() => {
     const handleResize = () => {
@@ -38,16 +39,24 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user == null) {
-        navigate("/login");
-      }
-    });
+    // Only redirect if not loading and user is null
+    if (!loading && user === null) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
-    return () => unsubscribe();
-  }, [navigate]);
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   const renderContent = () => {
+    // If we're on a new collection route, render the Outlet
+    if (isNewCollectionRoute) {
+      return <Outlet />;
+    }
+    
+    // Legacy Quiz Manager (state-based)
     if (selectedCollectionName === 'quiz') {
       return (
         <Suspense fallback={<LoadingSpinner />}>
@@ -56,17 +65,14 @@ const App: React.FC = () => {
       );
     }
 
+    // Default: redirect to carousel items
     return (
-      <div className="space-y-4 md:space-y-6">
-        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg transition-all duration-300 hover:shadow-xl">
-          <Suspense fallback={<LoadingSpinner />}>
-            <Adder collectionName={selectedCollectionName} />
-          </Suspense>
-        </div>
-        <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-6 shadow-lg transition-all duration-300 hover:shadow-xl">
-          <Suspense fallback={<LoadingSpinner />}>
-            <Displayer collectionName={selectedCollectionName} />
-          </Suspense>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Welcome to CIF Guardian Care Dashboard</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            Please select a collection from the sidebar to get started.
+          </p>
         </div>
       </div>
     );
@@ -98,7 +104,7 @@ const App: React.FC = () => {
               {theme === 'light' ? <LuMoon size={20} /> : <LuSun size={20} />}
             </button>
             <button
-              onClick={() => logoutGoogle()}
+              onClick={() => logout()}
               className="flex items-center gap-1 md:gap-2 bg-slate-200 dark:bg-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <LuLogOut size={16} className="md:size-5" />

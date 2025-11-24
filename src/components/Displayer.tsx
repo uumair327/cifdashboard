@@ -1,7 +1,7 @@
 import React, { useState, useCallback, memo } from "react";
 import { useCollectionData } from "../hooks/useCollectionData";
 import { FiRefreshCw, FiTrash2, FiEdit2, FiCheck, FiX } from "react-icons/fi";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../core/components/Toast/ToastProvider";
 
 interface DisplayerProps {
   collectionName: string;
