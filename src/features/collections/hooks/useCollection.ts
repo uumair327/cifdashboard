@@ -1,19 +1,20 @@
 /**
  * Custom hook for fetching and caching collection data
- * Implements 5-minute TTL caching to prevent redundant requests
+ * Uses real-time subscriptions for automatic updates
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
 import { BaseCollection } from '../domain/entities/Collection';
 import { DashboardError } from '../../../core/errors/DashboardError';
+import { useAuth } from '../../../core/auth';
 
 interface UseCollectionOptions {
   /**
-   * Cache time-to-live in milliseconds
-   * @default 300000 (5 minutes)
+   * Whether to use real-time subscriptions
+   * @default true
    */
-  cacheTTL?: number;
+  useRealTime?: boolean;
   
   /**
    * Whether to fetch data immediately on mount
@@ -29,18 +30,10 @@ interface UseCollectionResult<T extends BaseCollection> {
   refetch: () => Promise<void>;
 }
 
-// Global cache for collection data
-interface CacheEntry<T> {
-  data: T[];
-  timestamp: number;
-}
-
-const collectionCache = new Map<string, CacheEntry<any>>();
-
 /**
- * Hook for fetching and managing collection data with caching
+ * Hook for fetching and managing collection data with real-time updates
  * @param repository The repository instance for data access
- * @param collectionName Unique identifier for the collection (for caching)
+ * @param collectionName Unique identifier for the collection
  * @param options Configuration options
  */
 export function useCollection<T extends BaseCollection>(
@@ -49,79 +42,41 @@ export function useCollection<T extends BaseCollection>(
   options: UseCollectionOptions = {}
 ): UseCollectionResult<T> {
   const {
-    cacheTTL = 300000, // 5 minutes default
+    useRealTime = true,
     fetchOnMount = true,
   } = options;
 
   const [data, setData] = useState<T[] | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<DashboardError | null>(null);
+  
+  // Get auth state to wait for authentication
+  const { user, loading: authLoading } = useAuth();
   
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
   
-  // Track the last fetch time
-  const lastFetchRef = useRef<number>(0);
+  // Track unsubscribe function for real-time listener
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Clean up subscription on unmount
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
     };
   }, []);
 
   /**
-   * Check if cached data is still valid
-   */
-  const isCacheValid = useCallback((): boolean => {
-    const cached = collectionCache.get(collectionName);
-    if (!cached) return false;
-    
-    const now = Date.now();
-    const age = now - cached.timestamp;
-    return age < cacheTTL;
-  }, [collectionName, cacheTTL]);
-
-  /**
-   * Get data from cache if valid
-   */
-  const getCachedData = useCallback((): T[] | null => {
-    if (isCacheValid()) {
-      const cached = collectionCache.get(collectionName);
-      return cached ? cached.data : null;
-    }
-    return null;
-  }, [collectionName, isCacheValid]);
-
-  /**
-   * Store data in cache
-   */
-  const setCachedData = useCallback((newData: T[]): void => {
-    collectionCache.set(collectionName, {
-      data: newData,
-      timestamp: Date.now(),
-    });
-  }, [collectionName]);
-
-  /**
-   * Fetch data from repository
+   * Fetch data from repository (one-time fetch)
    */
   const fetchData = useCallback(async (): Promise<void> => {
-    console.log(`[useCollection] Starting fetch for ${collectionName}`);
+    console.log(`[useCollection] Starting one-time fetch for ${collectionName}`);
     
-    // Check cache first
-    const cachedData = getCachedData();
-    if (cachedData) {
-      console.log(`[useCollection] Using cached data for ${collectionName}:`, cachedData);
-      if (isMountedRef.current) {
-        setData(cachedData);
-        setError(null);
-      }
-      return;
-    }
-
-    // Fetch from repository
-    console.log(`[useCollection] No cache, fetching from repository for ${collectionName}`);
     if (isMountedRef.current) {
       setLoading(true);
       setError(null);
@@ -129,12 +84,10 @@ export function useCollection<T extends BaseCollection>(
 
     try {
       const result = await repository.getAll();
-      lastFetchRef.current = Date.now();
       console.log(`[useCollection] Fetch successful for ${collectionName}, got ${result.length} items:`, result);
       
       if (isMountedRef.current) {
         setData(result);
-        setCachedData(result);
         setError(null);
       }
     } catch (err) {
@@ -156,23 +109,105 @@ export function useCollection<T extends BaseCollection>(
         setLoading(false);
       }
     }
-  }, [repository, getCachedData, setCachedData, collectionName]);
+  }, [repository, collectionName]);
 
   /**
-   * Refetch data, bypassing cache
+   * Set up real-time subscription
+   */
+  const setupSubscription = useCallback(() => {
+    console.log(`[useCollection] Setting up real-time subscription for ${collectionName}`);
+    
+    if (isMountedRef.current) {
+      setLoading(true);
+      setError(null);
+    }
+
+    // Clean up existing subscription
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
+
+    // Set up new subscription
+    unsubscribeRef.current = repository.subscribe(
+      (items) => {
+        console.log(`[useCollection] Real-time update for ${collectionName}, got ${items.length} items`);
+        if (isMountedRef.current) {
+          setData(items);
+          setError(null);
+          setLoading(false);
+        }
+      },
+      (err) => {
+        console.error(`[useCollection] Real-time error for ${collectionName}:`, err);
+        if (isMountedRef.current) {
+          const dashboardError = new DashboardError({
+            code: 'OPERATION_FAILED',
+            message: 'Failed to subscribe to collection updates',
+            originalError: err,
+          });
+          setError(dashboardError);
+          setLoading(false);
+        }
+      }
+    );
+  }, [repository, collectionName]);
+
+  /**
+   * Refetch data
    */
   const refetch = useCallback(async (): Promise<void> => {
-    // Clear cache for this collection
-    collectionCache.delete(collectionName);
-    await fetchData();
-  }, [collectionName, fetchData]);
+    if (useRealTime) {
+      // For real-time mode, just re-setup the subscription
+      setupSubscription();
+    } else {
+      // For one-time fetch mode, fetch again
+      await fetchData();
+    }
+  }, [useRealTime, setupSubscription, fetchData]);
 
-  // Fetch data on mount if enabled
+  // Set up data fetching when auth is ready
   useEffect(() => {
-    if (fetchOnMount) {
+    // Don't fetch until auth is ready
+    if (authLoading) {
+      console.log(`[useCollection] Waiting for auth to complete for ${collectionName}`);
+      return;
+    }
+
+    // Don't fetch if not mounted or fetch on mount is disabled
+    if (!fetchOnMount || !isMountedRef.current) {
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      console.log(`[useCollection] No authenticated user for ${collectionName}`);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setError(new DashboardError({
+          code: 'OPERATION_FAILED',
+          message: 'User not authenticated',
+        }));
+      }
+      return;
+    }
+
+    console.log(`[useCollection] Auth ready, setting up data fetch for ${collectionName}`);
+
+    // Set up real-time subscription or one-time fetch
+    if (useRealTime) {
+      setupSubscription();
+    } else {
       fetchData();
     }
-  }, [fetchOnMount, fetchData]);
+
+    // Cleanup subscription on unmount or when dependencies change
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [authLoading, user, fetchOnMount, useRealTime, collectionName, setupSubscription, fetchData]);
 
   return {
     data,
@@ -182,35 +217,4 @@ export function useCollection<T extends BaseCollection>(
   };
 }
 
-/**
- * Clear all cached collection data
- */
-export function clearCollectionCache(): void {
-  collectionCache.clear();
-}
 
-/**
- * Clear cache for a specific collection
- */
-export function clearCollectionCacheByName(collectionName: string): void {
-  collectionCache.delete(collectionName);
-}
-
-/**
- * Get cache statistics for debugging
- */
-export function getCollectionCacheStats(): {
-  size: number;
-  entries: Array<{ name: string; age: number }>;
-} {
-  const now = Date.now();
-  const entries = Array.from(collectionCache.entries()).map(([name, entry]) => ({
-    name,
-    age: now - entry.timestamp,
-  }));
-
-  return {
-    size: collectionCache.size,
-    entries,
-  };
-}

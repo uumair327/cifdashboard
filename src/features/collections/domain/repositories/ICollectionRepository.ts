@@ -55,4 +55,15 @@ export interface ICollectionRepository<T> {
    * @returns Promise resolving to array of matching items
    */
   search(criteria: SearchCriteria): Promise<T[]>;
+
+  /**
+   * Subscribe to real-time updates for all items in the collection
+   * @param onData Callback invoked with updated data
+   * @param onError Callback invoked when an error occurs
+   * @returns Unsubscribe function to stop listening
+   */
+  subscribe(
+    onData: (items: T[]) => void,
+    onError: (error: Error) => void
+  ): () => void;
 }

@@ -4,14 +4,16 @@
  */
 import { useState, useEffect } from 'react';
 import { BaseCollection, CollectionType } from '../domain/entities/Collection';
+import { SearchableSelect } from '../../../core/components/SearchableSelect';
 
 export interface FormFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'url' | 'number' | 'textarea' | 'select' | 'checkbox' | 'date';
+  type: 'text' | 'email' | 'url' | 'number' | 'textarea' | 'select' | 'searchable-select' | 'checkbox' | 'date';
   required?: boolean;
   placeholder?: string;
-  options?: Array<{ value: string; label: string }>;
+  options?: Array<{ value: string; label: string }> | string[];
+  allowCustom?: boolean; // For searchable-select: allow custom values
   validation?: {
     min?: number;
     max?: number;
@@ -49,12 +51,13 @@ export function CollectionForm<T extends BaseCollection>({
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form data when initialData changes
+  // Update form data when initialData changes (using JSON stringify for deep comparison)
   useEffect(() => {
     setFormData(initialData);
     setErrors({});
     setTouched({});
-  }, [initialData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialData)]);
 
   // Validate a single field
   const validateField = (field: FormFieldConfig, value: any): string | null => {
@@ -213,8 +216,10 @@ export function CollectionForm<T extends BaseCollection>({
     const baseInputClasses = `
       block w-full px-3 py-2 border rounded-md shadow-sm 
       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-      ${fieldError ? 'border-red-300' : 'border-gray-300'}
-      ${isDisabled ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}
+      ${fieldError ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-slate-600'}
+      ${isDisabled ? 'bg-gray-50 dark:bg-slate-800 cursor-not-allowed' : 'bg-white dark:bg-slate-900'}
+      text-slate-900 dark:text-white
+      placeholder:text-slate-400 dark:placeholder:text-slate-500
     `.trim();
 
     switch (field.type) {
@@ -247,12 +252,33 @@ export function CollectionForm<T extends BaseCollection>({
             className={baseInputClasses}
           >
             <option value="">Select {field.label}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {field.options?.map(option => {
+              const optValue = typeof option === 'string' ? option : option.value;
+              const optLabel = typeof option === 'string' ? option : option.label;
+              return (
+                <option key={optValue} value={optValue}>
+                  {optLabel}
+                </option>
+              );
+            })}
           </select>
+        );
+
+      case 'searchable-select':
+        const searchableOptions = Array.isArray(field.options)
+          ? field.options.map(opt => typeof opt === 'string' ? opt : opt.value)
+          : [];
+        return (
+          <SearchableSelect
+            value={fieldValue}
+            onChange={(value) => handleFieldChange(field.name, value)}
+            onBlur={() => handleFieldBlur(field)}
+            options={searchableOptions}
+            placeholder={field.placeholder}
+            disabled={isDisabled}
+            required={field.required}
+            allowCustom={field.allowCustom !== false}
+          />
         );
 
       case 'checkbox':

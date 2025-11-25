@@ -6,7 +6,6 @@ import { useTheme } from "../context/ThemeContext";
 
 // Lazy load components
 const Sidebar = lazy(() => import("../components/Sidebar"));
-const QuizManager = lazy(() => import("../components/QuizManager").catch(() => ({ default: () => <div>Error loading Quiz Manager</div> })));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-full min-h-[200px]">
@@ -16,7 +15,6 @@ const LoadingSpinner = () => (
 );
 
 const App: React.FC = () => {
-  const [selectedCollectionName, setSelectedCollectionName] = useState<string>("quiz");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const navigate = useNavigate();
@@ -24,8 +22,8 @@ const App: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, loading, logout } = useAuth();
   
-  // Check if we're on a new collection page route
-  const isNewCollectionRoute = location.pathname.match(/\/(carousel-items|home-images|forum|learn|quizes|videos)/);
+  // Check if we're on a route that should render Outlet
+  const shouldRenderOutlet = location.pathname === '/' || location.pathname.match(/\/(carousel-items|home-images|forum|learn|quizes|videos|quiz-manager)/);
 
   useEffect(() => {
     const handleResize = () => {
@@ -51,31 +49,13 @@ const App: React.FC = () => {
   }
 
   const renderContent = () => {
-    // If we're on a new collection route, render the Outlet
-    if (isNewCollectionRoute) {
+    // Render Outlet for all routes
+    if (shouldRenderOutlet) {
       return <Outlet />;
     }
-    
-    // Legacy Quiz Manager (state-based)
-    if (selectedCollectionName === 'quiz') {
-      return (
-        <Suspense fallback={<LoadingSpinner />}>
-          <QuizManager />
-        </Suspense>
-      );
-    }
 
-    // Default: redirect to carousel items
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Welcome to CIF Guardian Care Dashboard</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
-            Please select a collection from the sidebar to get started.
-          </p>
-        </div>
-      </div>
-    );
+    // Fallback (shouldn't normally reach here)
+    return <Outlet />;
   };
 
   return (
@@ -93,7 +73,13 @@ const App: React.FC = () => {
                 {isSidebarOpen ? <LuX size={24} /> : <LuMenu size={24} />}
               </button>
             )}
-            <h1 className="text-xl md:text-2xl font-bold">CIF Guardian Care</h1>
+            <button
+              onClick={() => navigate('/')}
+              className="text-xl md:text-2xl font-bold hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+              aria-label="Go to home"
+            >
+              CIF Guardian Care
+            </button>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <button
@@ -133,15 +119,7 @@ const App: React.FC = () => {
         >
           <div className="p-3 md:p-4 h-full">
             <Suspense fallback={<LoadingSpinner />}>
-              <Sidebar
-                selectedCollectionName={selectedCollectionName}
-                setSelectedCollectionName={(collection) => {
-                  setSelectedCollectionName(collection);
-                  if (isMobile) {
-                    setIsSidebarOpen(false);
-                  }
-                }}
-              />
+              <Sidebar />
             </Suspense>
           </div>
         </div>

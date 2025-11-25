@@ -57,11 +57,19 @@ export const FIELD_CONFIGS: Record<CollectionType, FieldVisibilityConfig> = {
   },
   quiz_questions: {
     collectionType: 'quiz_questions',
-    defaultFields: ['quiz', 'question', 'category'],
-    expandableFields: ['options', 'correctOptionIndex', 'createdAt', 'updatedAt'],
+    defaultFields: ['quiz', 'question', 'category', 'correctOptionIndex'],
+    expandableFields: ['options', 'explanation', 'createdAt', 'updatedAt'],
     hiddenFields: ['id'],
     searchableFields: ['quiz', 'question', 'category'],
     sortableFields: ['quiz', 'question', 'category', 'createdAt', 'updatedAt'],
+  },
+  quiz: {
+    collectionType: 'quiz',
+    defaultFields: ['name', 'thumbnail', 'use'],
+    expandableFields: ['createdAt', 'updatedAt'],
+    hiddenFields: ['id'],
+    searchableFields: ['name'],
+    sortableFields: ['name', 'use', 'createdAt', 'updatedAt'],
   },
   videos: {
     collectionType: 'videos',

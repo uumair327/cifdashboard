@@ -6,17 +6,20 @@ import { ThemeProvider } from './context/ThemeContext'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ToastProvider } from './core/components/Toast/ToastProvider'
 import { AuthProvider, FirebaseAuthService } from './core/auth'
+import { ErrorBoundary } from './core/components/ErrorBoundary/ErrorBoundary'
 import { auth } from './firebase'
 
 // Lazy load pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const CarouselItemsPage = lazy(() => import('./features/collections/pages/CarouselItemsPage'))
 const HomeImagesPage = lazy(() => import('./features/collections/pages/HomeImagesPage'))
-const ForumPage = lazy(() => import('./features/collections/pages/ForumPage'))
+const ForumPage = lazy(() => import('./features/forum/pages/ForumManagementPage'))
 const LearnPage = lazy(() => import('./features/collections/pages/LearnPage'))
 const QuizesPage = lazy(() => import('./features/collections/pages/QuizesPage'))
 const VideosPage = lazy(() => import('./features/collections/pages/VideosPage'))
+const QuizManagerPage = lazy(() => import('./features/quiz/pages/QuizManagerPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -30,6 +33,14 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Dashboard />
+          </Suspense>
+        )
+      },
       {
         path: "carousel-items",
         element: (
@@ -77,6 +88,14 @@ const router = createBrowserRouter([
             <VideosPage />
           </Suspense>
         )
+      },
+      {
+        path: "quiz-manager",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <QuizManagerPage />
+          </Suspense>
+        )
       }
     ]
   },
@@ -105,12 +124,14 @@ const authService = new FirebaseAuthService(auth);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider authService={authService}>
-      <ThemeProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider authService={authService}>
+        <ThemeProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

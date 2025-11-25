@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { CollectionTableWithSearch } from '../components/CollectionTableWithSearch';
 import { CollectionForm, FormFieldConfig } from '../components/CollectionForm';
+import { ImportModal } from '../components/ImportModal';
 import { Modal } from '../../../core/components/Modal/Modal';
 import { useToast } from '../../../core/components/Toast/ToastProvider';
 import { BaseCollection, CollectionType } from '../domain/entities/Collection';
@@ -26,6 +27,7 @@ export function CollectionPage<T extends BaseCollection>({
   repository,
 }: CollectionPageProps<T>) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<T | null>(null);
@@ -35,6 +37,7 @@ export function CollectionPage<T extends BaseCollection>({
 
   // Fetch collection data
   const { data, loading, error, refetch } = useCollection<T>(repository, collectionType);
+  console.log('[CollectionPage] data from useCollection:', data?.length, 'items', data);
 
   // Mutations
   const { create, update, deleteItem, bulkDelete, creating, updating, deleting, bulkDeleting } =
@@ -114,6 +117,40 @@ export function CollectionPage<T extends BaseCollection>({
     setEditingItem(null);
   };
 
+  // Handle import
+  const handleImport = async (items: Partial<T>[]) => {
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const item of items) {
+        try {
+          await create(item as Omit<T, 'id' | 'createdAt' | 'updatedAt'>);
+          successCount++;
+        } catch (err) {
+          errorCount++;
+          console.error('Failed to import item:', err);
+        }
+      }
+
+      if (successCount > 0) {
+        addToast('success', `Successfully imported ${successCount} items`);
+      }
+      if (errorCount > 0) {
+        addToast('error', `Failed to import ${errorCount} items`);
+      }
+
+      setIsImportOpen(false);
+      refetch();
+    } catch (err) {
+      addToast('error', `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
+  // Get required and optional fields from formFields
+  const requiredFields = formFields.filter(f => f.required).map(f => f.name);
+  const optionalFields = formFields.filter(f => !f.required).map(f => f.name);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
@@ -140,6 +177,25 @@ export function CollectionPage<T extends BaseCollection>({
               />
             </svg>
             Refresh
+          </button>
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            Import
           </button>
           <button
             onClick={handleAddNew}
@@ -194,6 +250,16 @@ export function CollectionPage<T extends BaseCollection>({
           submitLabel={editingItem ? 'Update' : 'Create'}
         />
       </Modal>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImport}
+        requiredFields={requiredFields}
+        optionalFields={optionalFields}
+        collectionName={title}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

@@ -7,7 +7,8 @@ import {
   LuGraduationCap, 
   LuClipboardList, 
   LuVideo,
-  LuChevronRight
+  LuChevronRight,
+  LuLayoutDashboard
 } from "react-icons/lu";
 
 interface NavItem {
@@ -15,36 +16,16 @@ interface NavItem {
   path: string;
   icon: React.ReactNode;
   badge?: string;
-  legacyCollection?: string;
 }
 
-interface SideBarItemProps extends NavItem {
-  selectedCollectionName?: string;
-  setSelectedCollectionName?: (collection: string) => void;
-}
-
-const SideBarItem: React.FC<SideBarItemProps> = ({
+const SideBarItem: React.FC<NavItem> = ({
   name,
   path,
   icon,
   badge,
-  legacyCollection,
-  selectedCollectionName,
-  setSelectedCollectionName,
 }) => {
   const location = useLocation();
-  
-  // Check if this is a new route-based page or legacy state-based page
-  const isNewRoute = path.startsWith('/');
-  const isSelected = isNewRoute 
-    ? location.pathname === path 
-    : legacyCollection === selectedCollectionName;
-
-  const handleClick = () => {
-    if (!isNewRoute && setSelectedCollectionName && legacyCollection) {
-      setSelectedCollectionName(legacyCollection);
-    }
-  };
+  const isSelected = location.pathname === path;
 
   const content = (
     <>
@@ -83,48 +64,34 @@ const SideBarItem: React.FC<SideBarItemProps> = ({
     </>
   );
 
-  const className = `
-    group
-    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-    transition-all duration-200 ease-in-out
-    ${isSelected
-      ? 'bg-blue-50 dark:bg-blue-950/30 border-l-2 border-blue-600 dark:border-blue-400'
-      : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 border-l-2 border-transparent'
-    }
-    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900
-    active:scale-[0.98]
-  `;
-
-  if (isNewRoute) {
-    return (
-      <Link
-        to={path}
-        className={className}
-        aria-current={isSelected ? "page" : undefined}
-      >
-        {content}
-      </Link>
-    );
-  }
-
   return (
-    <button
-      onClick={handleClick}
-      className={className}
+    <Link
+      to={path}
+      className={`
+        group
+        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+        transition-all duration-200 ease-in-out
+        ${isSelected
+          ? 'bg-blue-50 dark:bg-blue-950/30 border-l-2 border-blue-600 dark:border-blue-400'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 border-l-2 border-transparent'
+        }
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900
+        active:scale-[0.98]
+      `}
       aria-current={isSelected ? "page" : undefined}
     >
       {content}
-    </button>
+    </Link>
   );
 };
 
-interface SidebarProps {
-  selectedCollectionName?: string;
-  setSelectedCollectionName?: (collection: string) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ selectedCollectionName, setSelectedCollectionName }) => {
+const Sidebar: React.FC = () => {
   const navItems: NavItem[] = [
+    {
+      name: "Overview",
+      path: "/",
+      icon: <LuLayoutDashboard />,
+    },
     {
       name: "Carousel Items",
       path: "/carousel-items",
@@ -162,36 +129,23 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedCollectionName, setSelectedCo
       {/* Navigation Header */}
       <div className="px-3 py-4 border-b border-slate-200 dark:border-slate-800">
         <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          Collections
+          Navigation
         </h2>
       </div>
 
       {/* Navigation Items */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map((item) => (
-          <SideBarItem
-            key={item.path}
-            {...item}
-            selectedCollectionName={selectedCollectionName}
-            setSelectedCollectionName={setSelectedCollectionName}
-          />
+          <SideBarItem key={item.path} {...item} />
         ))}
 
-        {/* Legacy Quiz Manager */}
-        {selectedCollectionName !== undefined && setSelectedCollectionName && (
-          <>
-            <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
-            <SideBarItem
-              name="Quiz Manager"
-              path=""
-              icon={<LuClipboardList />}
-              badge="Legacy"
-              legacyCollection="quiz"
-              selectedCollectionName={selectedCollectionName}
-              setSelectedCollectionName={setSelectedCollectionName}
-            />
-          </>
-        )}
+        {/* Quiz Manager */}
+        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+        <SideBarItem
+          name="Quiz Manager"
+          path="/quiz-manager"
+          icon={<LuClipboardList />}
+        />
       </div>
 
       {/* Footer (optional) */}

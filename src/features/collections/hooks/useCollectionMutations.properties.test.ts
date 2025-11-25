@@ -9,7 +9,6 @@ import fc from 'fast-check';
 import { useCollectionMutations } from './useCollectionMutations';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
 import { BaseCollection } from '../domain/entities/Collection';
-import { clearCollectionCache } from './useCollection';
 
 // Mock collection item for testing
 interface TestItem extends BaseCollection {
@@ -44,12 +43,13 @@ function createMockRepository(): ICollectionRepository<TestItem> {
     delete: vi.fn(async () => Promise.resolve()),
     bulkDelete: vi.fn(async () => Promise.resolve()),
     search: vi.fn(async () => Promise.resolve([])),
+    subscribe: vi.fn(() => () => {}),
   };
 }
 
 describe('useCollectionMutations Properties', () => {
   beforeEach(() => {
-    clearCollectionCache();
+    // No cache to clear anymore - using real-time subscriptions
   });
 
   describe('Property 19: Optimistic UI update immediacy', () => {

@@ -3,14 +3,11 @@
  * Integrates DataTable with collection data, field visibility, and actions
  */
 
-import { useMemo, useState, memo, useCallback } from 'react';
+import { useMemo, memo } from 'react';
 import { DataTable } from '../../../core/components/DataTable/DataTable';
 import { ColumnDef } from '../../../core/components/DataTable/types';
-import { SearchBar } from '../../../core/components/SearchBar/SearchBar';
-import { FilterCriteria as SearchFilterCriteria } from '../../../core/components/SearchBar/types';
 import { BaseCollection, CollectionType } from '../domain/entities/Collection';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
-import { useCollectionSearch } from '../hooks/useCollectionSearch';
 
 interface CollectionTableProps<T extends BaseCollection> {
   /**
@@ -62,11 +59,6 @@ interface CollectionTableProps<T extends BaseCollection> {
    * Callback to retry loading data
    */
   onRetry?: () => void;
-  
-  /**
-   * Enable search functionality
-   */
-  searchEnabled?: boolean;
 }
 
 /**
@@ -116,56 +108,42 @@ function CollectionTableComponent<T extends BaseCollection>({
   onDelete,
   onRowClick,
   onRetry,
-  searchEnabled = true,
 }: CollectionTableProps<T>) {
-  const { visibleFields, filterItem, searchableFields } = useFieldVisibility({
+  const { visibleFields } = useFieldVisibility({
     collectionType,
     viewMode: 'table',
   });
 
-  // Use collection search hook for filtering
-  const {
-    filteredData: searchFilteredData,
-    query,
-    setQuery,
-    filters: searchFilters,
-    setFilters: setSearchFilters,
-    clearAll: clearSearch,
-  } = useCollectionSearch(data, {
-    searchFields: searchableFields,
-  });
-
-  // Track if search is active
-  const hasActiveSearch = query.length > 0 || searchFilters.length > 0;
-
-  // Filter data to only include visible, non-empty fields
-  const filteredData = useMemo(() => {
-    const dataToFilter = searchEnabled ? searchFilteredData : (data || []);
-    console.log('[CollectionTable] dataToFilter:', dataToFilter.length, 'items');
+  // Just use the data as-is (search filtering is handled by parent component)
+  const displayData = useMemo(() => {
+    const dataToDisplay = data || [];
+    console.log('[CollectionTable] displayData:', dataToDisplay.length, 'items');
     console.log('[CollectionTable] visibleFields:', visibleFields);
-    const result = dataToFilter.map(item => filterItem(item) as T);
-    console.log('[CollectionTable] filteredData after filterItem:', result.length, 'items');
-    console.log('[CollectionTable] sample filtered item:', result[0]);
-    return result;
-  }, [searchEnabled, searchFilteredData, data, filterItem, visibleFields]);
+    console.log('[CollectionTable] sample item:', dataToDisplay[0]);
+    return dataToDisplay;
+  }, [data, visibleFields]);
 
-  // Convert searchable fields to SearchBar field format
-  const searchBarFields = useMemo(() => {
-    return searchableFields.map(field => ({
-      key: field,
-      label: getFieldDisplayName(field),
-    }));
-  }, [searchableFields]);
+
 
   // Generate columns configuration
   const columns: ColumnDef<T>[] = useMemo(() => {
-    const cols: ColumnDef<T>[] = visibleFields.map((field) => ({
-      id: field,
-      header: getFieldDisplayName(field),
-      accessorKey: field as keyof T,
-      cell: (value: any) => formatFieldValue(value),
-      sortable: true,
-    }));
+    const cols: ColumnDef<T>[] = visibleFields.map((field) => {
+      // Determine if field is likely a URL field
+      const isUrlField = field.toLowerCase().includes('url') || 
+                         field.toLowerCase().includes('link') || 
+                         field.toLowerCase().includes('image');
+      
+      return {
+        id: field,
+        header: getFieldDisplayName(field),
+        accessorKey: field as keyof T,
+        cell: (value: any) => formatFieldValue(value),
+        sortable: true,
+        // Set appropriate width for URL fields
+        maxWidth: isUrlField ? '400px' : '300px',
+        minWidth: isUrlField ? '200px' : '100px',
+      };
+    });
 
     // Add actions column if edit or delete handlers provided
     if (onEdit || onDelete) {
@@ -239,7 +217,7 @@ function CollectionTableComponent<T extends BaseCollection>({
   }
 
   // Show empty state when no data
-  console.log('[CollectionTable] Empty check - loading:', loading, 'data:', data?.length, 'filteredData:', filteredData.length);
+  console.log('[CollectionTable] Empty check - loading:', loading, 'data:', data?.length, 'displayData:', displayData.length);
   
   if (!loading && (!data || data.length === 0)) {
     return (
@@ -262,25 +240,12 @@ function CollectionTableComponent<T extends BaseCollection>({
         <details className="mt-4 text-xs text-left">
           <summary className="cursor-pointer">Debug Info</summary>
           <pre className="mt-2 p-2 bg-gray-100 rounded">
-            {JSON.stringify({ loading, dataLength: data?.length, filteredDataLength: filteredData.length }, null, 2)}
+            {JSON.stringify({ loading, dataLength: data?.length, displayDataLength: displayData.length }, null, 2)}
           </pre>
         </details>
       </div>
     );
   }
-
-  // Handle search from SearchBar
-  const handleSearch = (searchQuery: string, searchBarFilters: SearchFilterCriteria[]) => {
-    setQuery(searchQuery);
-    
-    // Convert SearchBar filters to domain filters
-    const domainFilters = searchBarFilters.map(f => ({
-      field: f.field,
-      operator: f.operator,
-      value: f.value,
-    }));
-    setSearchFilters(domainFilters);
-  };
 
   // Handle selection change
   const handleSelectionChange = (selected: T[]) => {
@@ -292,7 +257,7 @@ function CollectionTableComponent<T extends BaseCollection>({
 
   return (
     <DataTable
-      data={filteredData}
+      data={displayData}
       columns={columns}
       loading={loading}
       selection={onSelectionChange ? {

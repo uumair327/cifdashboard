@@ -54,15 +54,17 @@ export function CollectionTableWithSearch<T extends BaseCollection>({
   const { searchableFields } = useFieldVisibility({ collectionType });
 
   // Use search hook for filtering
+  console.log('[CollectionTableWithSearch] Received data:', data?.length, 'items');
   const {
     filteredData,
     query,
     setQuery,
     clearAll,
-  } = useCollectionSearch(data || [], {
+  } = useCollectionSearch(data, {
     searchFields: searchableFields,
     debounceMs: 300,
   });
+  console.log('[CollectionTableWithSearch] filteredData:', filteredData.length, 'items');
 
   // Generate placeholder if not provided
   const placeholder = useMemo(() => {

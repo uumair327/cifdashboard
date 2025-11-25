@@ -7,7 +7,6 @@ import { useState, useCallback } from 'react';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
 import { BaseCollection } from '../domain/entities/Collection';
 import { DashboardError } from '../../../core/errors/DashboardError';
-import { clearCollectionCacheByName } from './useCollection';
 
 interface UseCollectionMutationsOptions {
   /**
@@ -69,8 +68,7 @@ export function useCollectionMutations<T extends BaseCollection>(
       try {
         const newItem = await repository.create(item);
         
-        // Invalidate cache
-        clearCollectionCacheByName(collectionName);
+        // Real-time subscription will automatically update the data
         
         if (onSuccess) {
           onSuccess('create');
@@ -110,8 +108,7 @@ export function useCollectionMutations<T extends BaseCollection>(
       try {
         const updatedItem = await repository.update(id, item);
         
-        // Invalidate cache
-        clearCollectionCacheByName(collectionName);
+        // Real-time subscription will automatically update the data
         
         if (onSuccess) {
           onSuccess('update');
@@ -151,8 +148,7 @@ export function useCollectionMutations<T extends BaseCollection>(
       try {
         await repository.delete(id);
         
-        // Invalidate cache
-        clearCollectionCacheByName(collectionName);
+        // Real-time subscription will automatically update the data
         
         if (onSuccess) {
           onSuccess('delete');
@@ -205,8 +201,7 @@ export function useCollectionMutations<T extends BaseCollection>(
           await repository.bulkDelete(ids);
         }
         
-        // Invalidate cache
-        clearCollectionCacheByName(collectionName);
+        // Real-time subscription will automatically update the data
         
         if (onSuccess) {
           onSuccess('bulkDelete');

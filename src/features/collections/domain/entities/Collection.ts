@@ -59,6 +59,7 @@ export type CollectionType =
   | 'learn'
   | 'quizes'
   | 'quiz_questions'
+  | 'quiz'
   | 'videos';
 
 export type CollectionEntity =

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, memo } from 'react';
 import { ColumnDef, DataTableProps, SortState } from './types';
 import { classNames } from '../../utils';
 import { sortData, paginateData } from './utils';
+import { CellRenderer } from './CellRenderer';
 
 function DataTableComponent<T extends Record<string, any>>({
   data,
@@ -150,28 +151,13 @@ function DataTableComponent<T extends Record<string, any>>({
   const renderCell = (row: T, column: ColumnDef<T>) => {
     const value = getCellValue(row, column);
     
+    // Use custom cell renderer if provided
     if (column.cell) {
       return column.cell({ value, row });
     }
     
-    // Default rendering
-    if (value === null || value === undefined) {
-      return <span className="text-slate-400">—</span>;
-    }
-    
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    }
-    
-    if (Array.isArray(value)) {
-      return value.join(', ');
-    }
-    
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
-    
-    return String(value);
+    // Use smart cell renderer for default rendering
+    return <CellRenderer value={value} />;
   };
 
   const renderHeader = (column: ColumnDef<T>) => {
@@ -226,8 +212,8 @@ function DataTableComponent<T extends Record<string, any>>({
 
   return (
     <div className={className}>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 table-fixed">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
               {selection?.enabled && selection.multiple && (
@@ -292,7 +278,12 @@ function DataTableComponent<T extends Record<string, any>>({
                   {columns.map((column) => (
                     <td
                       key={column.id}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100"
+                      className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100 max-w-xs break-words"
+                      style={{
+                        width: column.width,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth || '300px',
+                      }}
                     >
                       {renderCell(row, column)}
                     </td>

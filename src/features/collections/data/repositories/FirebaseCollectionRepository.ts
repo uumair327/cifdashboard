@@ -12,6 +12,7 @@ import {
   updateDoc,
   deleteDoc,
   writeBatch,
+  onSnapshot,
   Timestamp,
   DocumentData,
 } from 'firebase/firestore';
@@ -257,5 +258,32 @@ export class FirebaseCollectionRepository<T extends BaseCollection>
         error instanceof Error ? error : undefined
       );
     }
+  }
+
+  subscribe(
+    onData: (items: T[]) => void,
+    onError: (error: Error) => void
+  ): () => void {
+    console.log(`[FirebaseRepo] Setting up real-time listener for: ${this.collectionName}`);
+    
+    const collectionRef = collection(db, this.collectionName);
+    
+    const unsubscribe = onSnapshot(
+      collectionRef,
+      (snapshot) => {
+        console.log(`[FirebaseRepo] Real-time update for ${this.collectionName}: ${snapshot.docs.length} documents`);
+        const items = snapshot.docs.map(doc => this.docToEntity(doc.id, doc.data()));
+        onData(items);
+      },
+      (error) => {
+        console.error(`[FirebaseRepo] Real-time listener error for ${this.collectionName}:`, error);
+        onError(error);
+      }
+    );
+
+    return () => {
+      console.log(`[FirebaseRepo] Unsubscribing from ${this.collectionName}`);
+      unsubscribe();
+    };
   }
 }
