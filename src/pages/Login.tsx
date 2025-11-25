@@ -1,18 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginWithGoogle } from "../firebaseAuth";
+import { useAuth } from "../core/auth";
 import { LuLoader2 } from "react-icons/lu";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../core/components/Toast/ToastProvider";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToast();
+  const { user, loading, login } = useAuth();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (!loading && user !== null) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async () => {
     try {
       setIsLoading(true);
-      await loginWithGoogle();
+      await login();
       addToast("Successfully signed in!", "success");
       navigate("/");
     } catch (err: any) {
