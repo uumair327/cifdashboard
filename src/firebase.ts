@@ -20,6 +20,6 @@ export const auth = getAuth(app);
 
 // Set persistence to LOCAL
 setPersistence(auth, browserLocalPersistence)
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Auth persistence error:", error);
   });
