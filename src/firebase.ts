@@ -3,14 +3,14 @@ import { getFirestore} from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBJKvh4ZXb3npq8cL9-mk-kDlSIUO6VppU",
-  authDomain: "guardiancare-a210f.firebaseapp.com",
-  databaseURL: "https://guardiancare-a210f-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "guardiancare-a210f",
-  storageBucket: "guardiancare-a210f.appspot.com",
-  messagingSenderId: "331315801686",
-  appId: "1:331315801686:web:c30800beace354e27595f7",
-  measurementId: "G-X5JBB7DYL9"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
