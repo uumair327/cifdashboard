@@ -7,6 +7,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ToastProvider } from './core/components/Toast/ToastProvider'
 import { AuthProvider, FirebaseAuthService } from './core/auth'
 import { ErrorBoundary } from './core/components/ErrorBoundary/ErrorBoundary'
+import { FeatureFlagProvider } from './core/feature-flags'
+import { FirebaseFeatureFlagRepository } from './core/feature-flags'
 import { auth } from './firebase'
 
 // Lazy load pages for code splitting
@@ -20,6 +22,7 @@ const LearnPage = lazy(() => import('./features/collections/pages/LearnPage'))
 const QuizesPage = lazy(() => import('./features/collections/pages/QuizesPage'))
 const VideosPage = lazy(() => import('./features/collections/pages/VideosPage'))
 const QuizManagerPage = lazy(() => import('./features/quiz/pages/QuizManagerPage'))
+const FeatureFlagsPage = lazy(() => import('./features/feature-flags/pages/FeatureFlagsPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -96,7 +99,15 @@ const router = createBrowserRouter([
             <QuizManagerPage />
           </Suspense>
         )
-      }
+      },
+      {
+        path: "feature-flags",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <FeatureFlagsPage />
+          </Suspense>
+        )
+      },
     ]
   },
   {
@@ -119,18 +130,21 @@ const router = createBrowserRouter([
   basename: '/cifdashboard'
 })
 
-// Initialize auth service
+// Initialize services (singletons)
 const authService = new FirebaseAuthService(auth);
+const featureFlagRepository = new FirebaseFeatureFlagRepository();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider authService={authService}>
-        <ThemeProvider>
-          <ToastProvider>
-            <RouterProvider router={router} />
-          </ToastProvider>
-        </ThemeProvider>
+        <FeatureFlagProvider repository={featureFlagRepository}>
+          <ThemeProvider>
+            <ToastProvider>
+              <RouterProvider router={router} />
+            </ToastProvider>
+          </ThemeProvider>
+        </FeatureFlagProvider>
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>,

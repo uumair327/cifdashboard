@@ -1,14 +1,15 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LuImage, 
-  LuImagePlus, 
-  LuMessageSquare, 
-  LuGraduationCap, 
-  LuClipboardList, 
+import {
+  LuImage,
+  LuImagePlus,
+  LuMessageSquare,
+  LuGraduationCap,
+  LuClipboardList,
   LuVideo,
   LuChevronRight,
-  LuLayoutDashboard
+  LuLayoutDashboard,
+  LuFlag,
 } from "react-icons/lu";
 
 interface NavItem {
@@ -40,8 +41,8 @@ const SideBarItem: React.FC<NavItem> = ({
       {/* Label */}
       <span className={`
         flex-1 text-sm font-medium transition-colors duration-200
-        ${isSelected 
-          ? 'text-slate-900 dark:text-white' 
+        ${isSelected
+          ? 'text-slate-900 dark:text-white'
           : 'text-slate-700 dark:text-slate-300'
         }
       `}>
@@ -139,12 +140,23 @@ const Sidebar: React.FC = () => {
           <SideBarItem key={item.path} {...item} />
         ))}
 
-        {/* Quiz Manager */}
+        {/* Tools section */}
         <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
         <SideBarItem
           name="Quiz Manager"
           path="/quiz-manager"
           icon={<LuClipboardList />}
+        />
+
+        {/* System section */}
+        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+        <p className="px-3 mb-1 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          System
+        </p>
+        <SideBarItem
+          name="Feature Flags"
+          path="/feature-flags"
+          icon={<LuFlag />}
         />
       </div>
 

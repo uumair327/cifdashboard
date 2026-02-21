@@ -21,9 +21,9 @@ const App: React.FC = () => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { user, loading, logout } = useAuth();
-  
+
   // Check if we're on a route that should render Outlet
-  const shouldRenderOutlet = location.pathname === '/' || location.pathname.match(/\/(carousel-items|home-images|forum|learn|quizes|videos|quiz-manager)/);
+  const shouldRenderOutlet = location.pathname === '/' || location.pathname.match(/\/(carousel-items|home-images|forum|learn|quizes|videos|quiz-manager|feature-flags)/);
 
   useEffect(() => {
     const handleResize = () => {
