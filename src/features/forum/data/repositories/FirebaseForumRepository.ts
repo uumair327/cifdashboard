@@ -14,11 +14,11 @@ import {
   deleteDoc,
   getDoc,
   getDocs,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../../../firebase';
 import { IForumRepository } from '../../domain/repositories/IForumRepository';
 import { Forum, Comment, UserDetails, ForumCategory } from '../../domain/entities/Forum';
+import { logger } from '../../../../core/utils/logger';
 
 export class FirebaseForumRepository implements IForumRepository {
   getForums(
@@ -50,7 +50,7 @@ export class FirebaseForumRepository implements IForumRepository {
         onUpdate(forums);
       },
       (error) => {
-        console.error('Error fetching forums:', error);
+        logger.error('Error fetching forums:', error);
         onError(error as Error);
       }
     );
@@ -82,7 +82,7 @@ export class FirebaseForumRepository implements IForumRepository {
         onUpdate(comments);
       },
       (error) => {
-        console.error('Error fetching comments:', error);
+        logger.error('Error fetching comments:', error);
         onError(error as Error);
       }
     );
@@ -130,7 +130,7 @@ export class FirebaseForumRepository implements IForumRepository {
         role: data.role || 'child',
       };
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      logger.error('Error fetching user details:', error);
       return {
         userName: 'Anonymous',
         userImage: '',

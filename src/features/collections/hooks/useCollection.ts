@@ -8,6 +8,7 @@ import { ICollectionRepository } from '../domain/repositories/ICollectionReposit
 import { BaseCollection } from '../domain/entities/Collection';
 import { DashboardError } from '../../../core/errors/DashboardError';
 import { useAuth } from '../../../core/auth';
+import { logger } from '../../../core/utils/logger';
 
 interface UseCollectionOptions {
   /**
@@ -15,7 +16,7 @@ interface UseCollectionOptions {
    * @default true
    */
   useRealTime?: boolean;
-  
+
   /**
    * Whether to fetch data immediately on mount
    * @default true
@@ -49,13 +50,13 @@ export function useCollection<T extends BaseCollection>(
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<DashboardError | null>(null);
-  
+
   // Get auth state to wait for authentication
   const { user, loading: authLoading } = useAuth();
-  
+
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
-  
+
   // Track unsubscribe function for real-time listener
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -75,8 +76,8 @@ export function useCollection<T extends BaseCollection>(
    * Fetch data from repository (one-time fetch)
    */
   const fetchData = useCallback(async (): Promise<void> => {
-    console.log(`[useCollection] Starting one-time fetch for ${collectionName}`);
-    
+    logger.debug(`[useCollection] Starting one-time fetch for ${collectionName}`);
+
     if (isMountedRef.current) {
       setLoading(true);
       setError(null);
@@ -84,28 +85,28 @@ export function useCollection<T extends BaseCollection>(
 
     try {
       const result = await repository.getAll();
-      console.log(`[useCollection] Fetch successful for ${collectionName}, got ${result.length} items:`, result);
-      
+      logger.debug(`[useCollection] Fetch successful for ${collectionName}, got ${result.length} items`);
+
       if (isMountedRef.current) {
         setData(result);
         setError(null);
       }
     } catch (err) {
-      console.error(`[useCollection] Error fetching collection data for ${collectionName}:`, err);
-      
+      logger.error(`[useCollection] Error fetching collection data for ${collectionName}:`, err);
+
       if (isMountedRef.current) {
         const dashboardError = err instanceof DashboardError
           ? err
           : new DashboardError({
-              code: 'OPERATION_FAILED',
-              message: 'Failed to fetch collection data',
-              originalError: err instanceof Error ? err : undefined,
-            });
+            code: 'OPERATION_FAILED',
+            message: 'Failed to fetch collection data',
+            originalError: err instanceof Error ? err : undefined,
+          });
         setError(dashboardError);
       }
     } finally {
       if (isMountedRef.current) {
-        console.log(`[useCollection] Setting loading to false for ${collectionName}`);
+        logger.debug(`[useCollection] Setting loading to false for ${collectionName}`);
         setLoading(false);
       }
     }
@@ -115,8 +116,8 @@ export function useCollection<T extends BaseCollection>(
    * Set up real-time subscription
    */
   const setupSubscription = useCallback(() => {
-    console.log(`[useCollection] Setting up real-time subscription for ${collectionName}`);
-    
+    logger.debug(`[useCollection] Setting up real-time subscription for ${collectionName}`);
+
     if (isMountedRef.current) {
       setLoading(true);
       setError(null);
@@ -130,7 +131,7 @@ export function useCollection<T extends BaseCollection>(
     // Set up new subscription
     unsubscribeRef.current = repository.subscribe(
       (items) => {
-        console.log(`[useCollection] Real-time update for ${collectionName}, got ${items.length} items`);
+        logger.debug(`[useCollection] Real-time update for ${collectionName}, got ${items.length} items`);
         if (isMountedRef.current) {
           setData(items);
           setError(null);
@@ -138,7 +139,7 @@ export function useCollection<T extends BaseCollection>(
         }
       },
       (err) => {
-        console.error(`[useCollection] Real-time error for ${collectionName}:`, err);
+        logger.error(`[useCollection] Real-time error for ${collectionName}:`, err);
         if (isMountedRef.current) {
           const dashboardError = new DashboardError({
             code: 'OPERATION_FAILED',
@@ -169,7 +170,7 @@ export function useCollection<T extends BaseCollection>(
   useEffect(() => {
     // Don't fetch until auth is ready
     if (authLoading) {
-      console.log(`[useCollection] Waiting for auth to complete for ${collectionName}`);
+      logger.debug(`[useCollection] Waiting for auth to complete for ${collectionName}`);
       return;
     }
 
@@ -180,7 +181,7 @@ export function useCollection<T extends BaseCollection>(
 
     // Check if user is authenticated
     if (!user) {
-      console.log(`[useCollection] No authenticated user for ${collectionName}`);
+      logger.debug(`[useCollection] No authenticated user for ${collectionName}`);
       if (isMountedRef.current) {
         setLoading(false);
         setError(new DashboardError({
@@ -191,7 +192,7 @@ export function useCollection<T extends BaseCollection>(
       return;
     }
 
-    console.log(`[useCollection] Auth ready, setting up data fetch for ${collectionName}`);
+    logger.debug(`[useCollection] Auth ready, setting up data fetch for ${collectionName}`);
 
     // Set up real-time subscription or one-time fetch
     if (useRealTime) {

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
 import { BaseCollection } from '../domain/entities/Collection';
+import { logger } from '../../../core/utils/logger';
 
 interface SimpleCollectionPageProps<T extends BaseCollection> {
   title: string;
@@ -29,18 +30,18 @@ export function SimpleCollectionPage<T extends BaseCollection>({
 
     async function fetchData() {
       try {
-        console.log(`[SimpleCollectionPage] Fetching ${collectionName}...`);
+        logger.debug(`[SimpleCollectionPage] Fetching ${collectionName}...`);
         setLoading(true);
         setError(null);
-        
+
         const result = await repository.getAll();
-        console.log(`[SimpleCollectionPage] Got ${result.length} items:`, result);
-        
+        logger.debug(`[SimpleCollectionPage] Got ${result.length} items`);
+
         if (mounted) {
           setData(result);
         }
       } catch (err) {
-        console.error(`[SimpleCollectionPage] Error:`, err);
+        logger.error(`[SimpleCollectionPage] Error:`, err);
         if (mounted) {
           setError(err instanceof Error ? err.message : 'Failed to load data');
         }
@@ -58,8 +59,7 @@ export function SimpleCollectionPage<T extends BaseCollection>({
     };
   }, [repository, collectionName]);
 
-  // Debug logging
-  console.log(`[SimpleCollectionPage] Render - loading: ${loading}, error: ${error}, data length: ${data.length}`);
+  logger.debug(`[SimpleCollectionPage] Render - loading: ${loading}, error: ${error}, data length: ${data.length}`);
 
   if (loading) {
     return (
@@ -76,13 +76,6 @@ export function SimpleCollectionPage<T extends BaseCollection>({
         <div className="text-red-500 mb-4">
           <h3 className="text-lg font-semibold">Error Loading Data</h3>
           <p className="text-sm">{error}</p>
-          <details className="mt-4 text-left">
-            <summary className="cursor-pointer text-sm font-medium">Debug Info</summary>
-            <pre className="mt-2 p-4 bg-gray-100 rounded text-xs overflow-auto">
-              Collection: {collectionName}
-              {'\n'}Error: {error}
-            </pre>
-          </details>
         </div>
       </div>
     );
@@ -92,16 +85,6 @@ export function SimpleCollectionPage<T extends BaseCollection>({
     return (
       <div className="p-8 text-center text-gray-500">
         <p className="mb-2">No {title.toLowerCase()} found</p>
-        <p className="text-xs">Collection: {collectionName}</p>
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium">Debug Info</summary>
-          <pre className="mt-2 p-4 bg-gray-100 rounded text-xs text-left">
-            Collection Name: {collectionName}
-            {'\n'}Data Length: {data.length}
-            {'\n'}Loading: {loading}
-            {'\n'}Error: {error || 'none'}
-          </pre>
-        </details>
       </div>
     );
   }
@@ -111,25 +94,10 @@ export function SimpleCollectionPage<T extends BaseCollection>({
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
         <div className="text-sm text-gray-600">
-          ✅ {data.length} items loaded
+          {data.length} items loaded
         </div>
       </div>
-      
-      {/* Debug Panel */}
-      <details className="mb-4 p-4 bg-blue-50 rounded">
-        <summary className="cursor-pointer text-sm font-medium text-blue-900">
-          🔍 Debug Info (Click to expand)
-        </summary>
-        <pre className="mt-2 p-4 bg-white rounded text-xs overflow-auto max-h-60">
-          {JSON.stringify({
-            collection: collectionName,
-            itemCount: data.length,
-            fields: fields,
-            sampleItem: data[0] || null,
-          }, null, 2)}
-        </pre>
-      </details>
-      
+
       {/* Simple Table */}
       <div className="overflow-x-auto shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">

@@ -1,118 +1,125 @@
 # CIF Dashboard
 
-A modern web application built with React, TypeScript, and Vite for managing and visualizing CIF (Customer Information File) data.
+> Admin dashboard for the [GuardianCare](https://github.com/uumair327/guardiancare) child safety Flutter application.
+
+A modern web dashboard built with **React**, **TypeScript**, and **Vite** for managing GuardianCare's Firestore content — collections, forums, quizzes, and media.
 
 ## Features
 
-- Modern, responsive UI built with React and TypeScript
-- Fast development experience with Vite
-- Type-safe development with TypeScript
-- Styled with Tailwind CSS
-- Firebase integration for backend services
-- ESLint configuration for code quality
+- 🔐 **Google OAuth** authentication via Firebase
+- 📊 **Collection management** — CRUD for carousel items, home images, learn content, quizzes, videos
+- 💬 **Forum moderation** — manage posts and comments
+- 🧩 **Quiz manager** — create and edit quizzes with questions
+- 🌙 **Dark mode** support
+- 📱 **Responsive** sidebar navigation
+- ⚡ **Code splitting** with lazy-loaded routes
 
 ## Tech Stack
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Firebase
-- ESLint
+| Layer          | Technology                     |
+|----------------|--------------------------------|
+| Framework      | React 18                       |
+| Language       | TypeScript                     |
+| Build Tool     | Vite 5                         |
+| Styling        | Tailwind CSS                   |
+| Backend        | Firebase (Firestore, Auth)     |
+| Hosting        | GitHub Pages                   |
+| CI/CD          | GitHub Actions                 |
+| Architecture   | Clean Architecture (DDD)       |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
+- [Node.js](https://nodejs.org/) v18+ (LTS)
+- npm v9+
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone** the repository:
+   ```bash
+   git clone https://github.com/uumair327/cifdashboard.git
+   cd cifdashboard
+   ```
 
-```bash
-git clone [your-repository-url]
-cd cifdashboard
-```
+2. **Install** dependencies:
+   ```bash
+   npm install
+   ```
 
-2. Install dependencies:
+3. **Configure** environment:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Fill in `.env.local` with your Firebase web app credentials.  
+   See `.env.example` for the required keys.
 
-```bash
-npm install
-# or
-yarn install
-```
-
-3. Start the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-The application will be available at `http://localhost:5173`
+4. **Start** the dev server:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:5173/cifdashboard/](http://localhost:5173/cifdashboard/)
 
 ### Building for Production
 
-To create a production build:
-
 ```bash
 npm run build
-# or
-yarn build
 ```
 
-The build artifacts will be stored in the `dist/` directory.
+Output is in `dist/`, ready for GitHub Pages deployment.
 
 ## Project Structure
 
-- `src/` - Source code
-- `public/` - Static assets
-- `dist/` - Production build output
-- `.github/` - GitHub configuration
-- `.firebase/` - Firebase configuration
+```
+src/
+├── core/                   # Shared infrastructure
+│   ├── auth/               # Auth abstraction (domain → data → context)
+│   ├── components/         # Reusable UI (DataTable, Modal, Toast, etc.)
+│   ├── errors/             # Shared error types
+│   └── hooks/              # Shared React hooks
+├── features/
+│   ├── collections/        # Collection CRUD feature
+│   │   ├── domain/         # Entities, interfaces, services
+│   │   ├── data/           # Firebase repository + factory
+│   │   ├── hooks/          # React hooks
+│   │   ├── components/     # Feature UI
+│   │   └── pages/          # Feature pages
+│   ├── forum/              # Forum management feature
+│   └── quiz/               # Quiz management feature
+├── pages/                  # App-level pages (App, Login, Register)
+├── firebase.ts             # Firebase initialization (env-based)
+└── main.tsx                # Entry point & routing
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architectural documentation.
+
+## Deployment
+
+The app auto-deploys to **GitHub Pages** on push to `main` via GitHub Actions.
+
+### Required GitHub Secrets
+
+Configure in **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `VITE_FIREBASE_API_KEY` | Firebase Web API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+| `VITE_FIREBASE_DATABASE_URL` | Realtime Database URL |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Cloud Storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID |
+| `VITE_FIREBASE_APP_ID` | Firebase Web app ID |
+| `VITE_FIREBASE_MEASUREMENT_ID` | Google Analytics ID |
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for our security policy and responsible disclosure process.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module",
-    project: ["./tsconfig.json", "./tsconfig.node.json"],
-    tsconfigRootDir: __dirname,
-  },
-};
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

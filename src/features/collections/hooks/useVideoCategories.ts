@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { logger } from '../../../core/utils/logger';
 
 export function useVideoCategories() {
   const [categories, setCategories] = useState<string[]>([]);
@@ -34,7 +35,7 @@ export function useVideoCategories() {
         setCategories(uniqueCategories);
         setError(null);
       } catch (err) {
-        console.error('Error fetching video categories:', err);
+        logger.error('Error fetching video categories:', err);
         setError(err as Error);
       } finally {
         setLoading(false);

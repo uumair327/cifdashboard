@@ -12,6 +12,7 @@ import { BaseCollection, CollectionType } from '../domain/entities/Collection';
 import { useCollection } from '../hooks/useCollection';
 import { useCollectionMutations } from '../hooks/useCollectionMutations';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
+import { logger } from '../../../core/utils/logger';
 
 interface CollectionPageProps<T extends BaseCollection> {
   collectionType: CollectionType;
@@ -37,7 +38,7 @@ export function CollectionPage<T extends BaseCollection>({
 
   // Fetch collection data
   const { data, loading, error, refetch } = useCollection<T>(repository, collectionType);
-  console.log('[CollectionPage] data from useCollection:', data?.length, 'items', data);
+  logger.debug('[CollectionPage] data from useCollection:', data?.length, 'items');
 
   // Mutations
   const { create, update, deleteItem, bulkDelete, creating, updating, deleting, bulkDeleting } =
@@ -129,7 +130,7 @@ export function CollectionPage<T extends BaseCollection>({
           successCount++;
         } catch (err) {
           errorCount++;
-          console.error('Failed to import item:', err);
+          logger.error('Failed to import item:', err);
         }
       }
 
@@ -232,6 +233,7 @@ export function CollectionPage<T extends BaseCollection>({
         onBulkDelete={handleBulkDelete}
         onRetry={refetch}
         bulkLoading={isLoading}
+        bulkProgress={bulkProgress}
       />
 
       {/* Form Modal */}

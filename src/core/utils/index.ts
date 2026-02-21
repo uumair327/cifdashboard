@@ -1,4 +1,5 @@
 // Core utility functions
+export { logger } from './logger';
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,

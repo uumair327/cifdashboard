@@ -11,6 +11,7 @@ import { ForumList } from '../components/ForumList';
 import { ForumForm } from '../components/ForumForm';
 import { useAuth } from '../../../core/auth';
 import { LuPlus } from 'react-icons/lu';
+import { logger } from '../../../core/utils/logger';
 
 export default function ForumManagementPage() {
   const { user } = useAuth();
@@ -22,12 +23,12 @@ export default function ForumManagementPage() {
 
   const handleCreateForum = async (title: string, description: string) => {
     if (!user) return;
-    
+
     try {
       await repository.createForum(title, description, selectedCategory, user.uid);
       setShowCreateForm(false);
     } catch (err) {
-      console.error('Error creating forum:', err);
+      logger.error('Error creating forum:', err);
     }
   };
 
@@ -39,7 +40,7 @@ export default function ForumManagementPage() {
     try {
       await repository.deleteForum(forumId);
     } catch (err) {
-      console.error('Error deleting forum:', err);
+      logger.error('Error deleting forum:', err);
     }
   };
 
@@ -68,21 +69,19 @@ export default function ForumManagementPage() {
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
           onClick={() => setSelectedCategory('parent')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            selectedCategory === 'parent'
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${selectedCategory === 'parent'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
+            }`}
         >
           Parent Forums
         </button>
         <button
           onClick={() => setSelectedCategory('children')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            selectedCategory === 'children'
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${selectedCategory === 'children'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
+            }`}
         >
           Children Forums
         </button>

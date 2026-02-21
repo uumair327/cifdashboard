@@ -1,5 +1,50 @@
-# Logs
-logs
+# =============================================================================
+# CIF Dashboard - Open Source .gitignore
+# =============================================================================
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Build Artifacts ─────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# ─── Environment Variables & Secrets ──────────────────────────────────────────
+# CRITICAL: Never commit secrets to version control
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+*.local
+
+# ─── Firebase ─────────────────────────────────────────────────────────────────
+.firebase/
+firebase-debug.log
+firestore-debug.log
+database-debug.log
+storage-debug.log
+ui-debug.log
+.firebaserc.backup
+
+# ─── Service Account Keys & Credentials ──────────────────────────────────────
+# CRITICAL: These MUST never be committed
+serviceAccountKey*.json
+*-service-account-key.json
+service-account-*.json
+*credentials*.json
+*.pem
+*.p12
+*.key
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,52 +52,35 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# ─── Editor & IDE ─────────────────────────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-.codegpt
-
-# Index files
-*.idx
-
-# Environment variables and secrets
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Firebase
-.firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-
-# Service account keys
-*-service-account-key.json
-service-account-*.json
-
-# Build artifacts
-build/
-dist/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+# ─── OS Files ─────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ─── Testing ──────────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+
+# ─── AI & Tools ───────────────────────────────────────────────────────────────
+.codegpt/
+.idx/
+.gemini/
+.agent/
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.tgz
+.cache/
+.parcel-cache/

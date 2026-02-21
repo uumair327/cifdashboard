@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { type FC, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../core/auth";
 import { LuLoader2 } from "react-icons/lu";
 import { useToast } from "../core/components/Toast/ToastProvider";
+import { logger } from "../core/utils/logger";
 
-const Login: React.FC = () => {
+const Login: FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToast();
@@ -21,11 +22,12 @@ const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await login();
-      addToast("Successfully signed in!", "success");
+      addToast("success", "Successfully signed in!");
       navigate("/");
-    } catch (err: any) {
-      console.error("Login error:", err);
-      addToast(err.message || "Failed to sign in. Please try again.", "error", 5000);
+    } catch (err: unknown) {
+      logger.error("Login error:", err);
+      const message = err instanceof Error ? err.message : "Failed to sign in. Please try again.";
+      addToast("error", message, 5000);
     } finally {
       setIsLoading(false);
     }

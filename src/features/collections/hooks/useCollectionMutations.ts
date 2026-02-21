@@ -7,23 +7,24 @@ import { useState, useCallback } from 'react';
 import { ICollectionRepository } from '../domain/repositories/ICollectionRepository';
 import { BaseCollection } from '../domain/entities/Collection';
 import { DashboardError } from '../../../core/errors/DashboardError';
+import { logger } from '../../../core/utils/logger';
 
 interface UseCollectionMutationsOptions {
   /**
    * Collection name for cache invalidation
    */
   collectionName: string;
-  
+
   /**
    * Callback when mutation succeeds
    */
   onSuccess?: (operation: string) => void;
-  
+
   /**
    * Callback when mutation fails
    */
   onError?: (error: DashboardError, operation: string) => void;
-  
+
   /**
    * Callback for progress updates during bulk operations
    */
@@ -35,7 +36,7 @@ interface UseCollectionMutationsResult<T extends BaseCollection> {
   updating: boolean;
   deleting: boolean;
   bulkDeleting: boolean;
-  
+
   create: (item: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => Promise<T | null>;
   update: (id: string, item: Partial<T>) => Promise<T | null>;
   deleteItem: (id: string) => Promise<boolean>;
@@ -67,29 +68,29 @@ export function useCollectionMutations<T extends BaseCollection>(
 
       try {
         const newItem = await repository.create(item);
-        
+
         // Real-time subscription will automatically update the data
-        
+
         if (onSuccess) {
           onSuccess('create');
         }
-        
+
         return newItem;
       } catch (error) {
-        console.error('Error creating item:', error);
-        
+        logger.error('Error creating item:', error);
+
         const dashboardError = error instanceof DashboardError
           ? error
           : new DashboardError({
-              code: 'OPERATION_FAILED',
-              message: 'Failed to create item',
-              originalError: error instanceof Error ? error : undefined,
-            });
-        
+            code: 'OPERATION_FAILED',
+            message: 'Failed to create item',
+            originalError: error instanceof Error ? error : undefined,
+          });
+
         if (onError) {
           onError(dashboardError, 'create');
         }
-        
+
         return null;
       } finally {
         setCreating(false);
@@ -107,29 +108,29 @@ export function useCollectionMutations<T extends BaseCollection>(
 
       try {
         const updatedItem = await repository.update(id, item);
-        
+
         // Real-time subscription will automatically update the data
-        
+
         if (onSuccess) {
           onSuccess('update');
         }
-        
+
         return updatedItem;
       } catch (error) {
-        console.error('Error updating item:', error);
-        
+        logger.error('Error updating item:', error);
+
         const dashboardError = error instanceof DashboardError
           ? error
           : new DashboardError({
-              code: 'OPERATION_FAILED',
-              message: 'Failed to update item',
-              originalError: error instanceof Error ? error : undefined,
-            });
-        
+            code: 'OPERATION_FAILED',
+            message: 'Failed to update item',
+            originalError: error instanceof Error ? error : undefined,
+          });
+
         if (onError) {
           onError(dashboardError, 'update');
         }
-        
+
         return null;
       } finally {
         setUpdating(false);
@@ -147,29 +148,29 @@ export function useCollectionMutations<T extends BaseCollection>(
 
       try {
         await repository.delete(id);
-        
+
         // Real-time subscription will automatically update the data
-        
+
         if (onSuccess) {
           onSuccess('delete');
         }
-        
+
         return true;
       } catch (error) {
-        console.error('Error deleting item:', error);
-        
+        logger.error('Error deleting item:', error);
+
         const dashboardError = error instanceof DashboardError
           ? error
           : new DashboardError({
-              code: 'OPERATION_FAILED',
-              message: 'Failed to delete item',
-              originalError: error instanceof Error ? error : undefined,
-            });
-        
+            code: 'OPERATION_FAILED',
+            message: 'Failed to delete item',
+            originalError: error instanceof Error ? error : undefined,
+          });
+
         if (onError) {
           onError(dashboardError, 'delete');
         }
-        
+
         return false;
       } finally {
         setDeleting(false);
@@ -190,7 +191,7 @@ export function useCollectionMutations<T extends BaseCollection>(
         if (onProgress && ids.length > 1) {
           let completed = 0;
           const total = ids.length;
-          
+
           for (const id of ids) {
             await repository.delete(id);
             completed++;
@@ -200,29 +201,29 @@ export function useCollectionMutations<T extends BaseCollection>(
           // Otherwise use bulk delete
           await repository.bulkDelete(ids);
         }
-        
+
         // Real-time subscription will automatically update the data
-        
+
         if (onSuccess) {
           onSuccess('bulkDelete');
         }
-        
+
         return true;
       } catch (error) {
-        console.error('Error bulk deleting items:', error);
-        
+        logger.error('Error bulk deleting items:', error);
+
         const dashboardError = error instanceof DashboardError
           ? error
           : new DashboardError({
-              code: 'OPERATION_FAILED',
-              message: 'Failed to bulk delete items',
-              originalError: error instanceof Error ? error : undefined,
-            });
-        
+            code: 'OPERATION_FAILED',
+            message: 'Failed to bulk delete items',
+            originalError: error instanceof Error ? error : undefined,
+          });
+
         if (onError) {
           onError(dashboardError, 'bulkDelete');
         }
-        
+
         return false;
       } finally {
         setBulkDeleting(false);

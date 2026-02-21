@@ -2,15 +2,16 @@
  * Firebase Authentication Service Implementation
  * Data layer implementation of IAuthService using Firebase
  */
-import { 
+import {
   Auth,
-  GoogleAuthProvider, 
-  signInWithPopup, 
+  GoogleAuthProvider,
+  signInWithPopup,
   browserPopupRedirectResolver,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
 import { IAuthService, User } from '../domain/IAuthService';
+import { logger } from '../../utils/logger';
 
 export class FirebaseAuthService implements IAuthService {
   private auth: Auth;
@@ -30,7 +31,7 @@ export class FirebaseAuthService implements IAuthService {
    */
   private mapFirebaseUser(firebaseUser: FirebaseUser | null): User | null {
     if (!firebaseUser) return null;
-    
+
     return {
       uid: firebaseUser.uid,
       email: firebaseUser.email,
@@ -46,31 +47,36 @@ export class FirebaseAuthService implements IAuthService {
   async loginWithGoogle(): Promise<User> {
     try {
       const result = await signInWithPopup(
-        this.auth, 
-        this.provider, 
+        this.auth,
+        this.provider,
         browserPopupRedirectResolver
       );
       const user = this.mapFirebaseUser(result.user);
-      
+
       if (!user) {
         throw new Error('Failed to get user information');
       }
-      
+
       return user;
-    } catch (error: any) {
-      console.error('Firebase auth error:', error);
-      
+    } catch (error: unknown) {
+      logger.error('Firebase auth error:', error);
+
       // Map Firebase error codes to user-friendly messages
-      if (error.code === 'auth/popup-blocked') {
+      const code = typeof error === 'object' && error !== null && 'code' in error
+        ? (error as { code: string }).code
+        : '';
+      const msg = error instanceof Error ? error.message : 'Failed to login with Google';
+
+      if (code === 'auth/popup-blocked') {
         throw new Error('Please allow popups for this website');
-      } else if (error.code === 'auth/cancelled-popup-request') {
+      } else if (code === 'auth/cancelled-popup-request') {
         throw new Error('Login was cancelled');
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (code === 'auth/popup-closed-by-user') {
         throw new Error('Login popup was closed');
-      } else if (error.code === 'auth/unauthorized-domain') {
+      } else if (code === 'auth/unauthorized-domain') {
         throw new Error('This domain is not authorized for Firebase Authentication');
       } else {
-        throw new Error(error.message || 'Failed to login with Google');
+        throw new Error(msg);
       }
     }
   }
@@ -78,9 +84,9 @@ export class FirebaseAuthService implements IAuthService {
   async logout(): Promise<void> {
     try {
       await this.auth.signOut();
-    } catch (error: any) {
-      console.error('Logout error:', error);
-      throw new Error(error.message || 'Failed to logout');
+    } catch (error: unknown) {
+      logger.error('Logout error:', error);
+      throw new Error(error instanceof Error ? error.message : 'Failed to logout');
     }
   }
 

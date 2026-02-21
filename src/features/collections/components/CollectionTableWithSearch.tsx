@@ -10,6 +10,7 @@ import { BaseCollection, CollectionType } from '../domain/entities/Collection';
 import { useCollectionSearch } from '../hooks/useCollectionSearch';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
 import { ExportService, ExportFormat } from '../domain/services/ExportService';
+import { logger } from '../../../core/utils/logger';
 
 interface CollectionTableWithSearchProps<T extends BaseCollection> {
   collectionType: CollectionType;
@@ -54,7 +55,7 @@ export function CollectionTableWithSearch<T extends BaseCollection>({
   const { searchableFields } = useFieldVisibility({ collectionType });
 
   // Use search hook for filtering
-  console.log('[CollectionTableWithSearch] Received data:', data?.length, 'items');
+  logger.debug('[CollectionTableWithSearch] Received data:', data?.length, 'items');
   const {
     filteredData,
     query,
@@ -64,7 +65,7 @@ export function CollectionTableWithSearch<T extends BaseCollection>({
     searchFields: searchableFields,
     debounceMs: 300,
   });
-  console.log('[CollectionTableWithSearch] filteredData:', filteredData.length, 'items');
+  logger.debug('[CollectionTableWithSearch] filteredData:', filteredData.length, 'items');
 
   // Generate placeholder if not provided
   const placeholder = useMemo(() => {
@@ -100,7 +101,7 @@ export function CollectionTableWithSearch<T extends BaseCollection>({
   const handleExport = (format: ExportFormat) => {
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `${collectionType}_${timestamp}`;
-    
+
     // Export filtered data (respects current search/filter)
     ExportService.export(filteredData, format, filename);
     setShowExportMenu(false);

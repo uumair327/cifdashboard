@@ -8,53 +8,54 @@ import { DataTable } from '../../../core/components/DataTable/DataTable';
 import { ColumnDef } from '../../../core/components/DataTable/types';
 import { BaseCollection, CollectionType } from '../domain/entities/Collection';
 import { useFieldVisibility } from '../hooks/useFieldVisibility';
+import { logger } from '../../../core/utils/logger';
 
 interface CollectionTableProps<T extends BaseCollection> {
   /**
    * Collection type for field visibility configuration
    */
   collectionType: CollectionType;
-  
+
   /**
    * Collection data to display
    */
   data: T[] | null;
-  
+
   /**
    * Loading state
    */
   loading?: boolean;
-  
+
   /**
    * Error state
    */
   error?: Error | null;
-  
+
   /**
    * Selected row IDs
    */
   selectedIds?: string[];
-  
+
   /**
    * Callback when selection changes
    */
   onSelectionChange?: (selectedIds: string[]) => void;
-  
+
   /**
    * Callback when edit is clicked
    */
   onEdit?: (item: T) => void;
-  
+
   /**
    * Callback when delete is clicked
    */
   onDelete?: (item: T) => void;
-  
+
   /**
    * Callback when row is clicked
    */
   onRowClick?: (item: T) => void;
-  
+
   /**
    * Callback to retry loading data
    */
@@ -68,23 +69,23 @@ function formatFieldValue(value: any): string {
   if (value === null || value === undefined) {
     return '';
   }
-  
+
   if (value instanceof Date) {
     return value.toLocaleDateString();
   }
-  
+
   if (typeof value === 'boolean') {
     return value ? 'Yes' : 'No';
   }
-  
+
   if (Array.isArray(value)) {
     return value.join(', ');
   }
-  
+
   if (typeof value === 'object') {
     return JSON.stringify(value);
   }
-  
+
   return String(value);
 }
 
@@ -117,9 +118,7 @@ function CollectionTableComponent<T extends BaseCollection>({
   // Just use the data as-is (search filtering is handled by parent component)
   const displayData = useMemo(() => {
     const dataToDisplay = data || [];
-    console.log('[CollectionTable] displayData:', dataToDisplay.length, 'items');
-    console.log('[CollectionTable] visibleFields:', visibleFields);
-    console.log('[CollectionTable] sample item:', dataToDisplay[0]);
+    logger.debug('[CollectionTable] displayData:', dataToDisplay.length, 'items, visibleFields:', visibleFields.length);
     return dataToDisplay;
   }, [data, visibleFields]);
 
@@ -129,10 +128,10 @@ function CollectionTableComponent<T extends BaseCollection>({
   const columns: ColumnDef<T>[] = useMemo(() => {
     const cols: ColumnDef<T>[] = visibleFields.map((field) => {
       // Determine if field is likely a URL field
-      const isUrlField = field.toLowerCase().includes('url') || 
-                         field.toLowerCase().includes('link') || 
-                         field.toLowerCase().includes('image');
-      
+      const isUrlField = field.toLowerCase().includes('url') ||
+        field.toLowerCase().includes('link') ||
+        field.toLowerCase().includes('image');
+
       return {
         id: field,
         header: getFieldDisplayName(field),
@@ -216,9 +215,6 @@ function CollectionTableComponent<T extends BaseCollection>({
     );
   }
 
-  // Show empty state when no data
-  console.log('[CollectionTable] Empty check - loading:', loading, 'data:', data?.length, 'displayData:', displayData.length);
-  
   if (!loading && (!data || data.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -237,12 +233,6 @@ function CollectionTableComponent<T extends BaseCollection>({
         </svg>
         <h3 className="text-lg font-semibold mb-2 text-gray-700">No Items Found</h3>
         <p className="text-sm text-gray-500">There are no items in this collection yet.</p>
-        <details className="mt-4 text-xs text-left">
-          <summary className="cursor-pointer">Debug Info</summary>
-          <pre className="mt-2 p-2 bg-gray-100 rounded">
-            {JSON.stringify({ loading, dataLength: data?.length, displayDataLength: displayData.length }, null, 2)}
-          </pre>
-        </details>
       </div>
     );
   }

@@ -9,6 +9,7 @@ import { IForumRepository } from '../domain/repositories/IForumRepository';
 import { CommentItem } from './CommentItem';
 import { useAuth } from '../../../core/auth';
 import { LuSend, LuLoader2 } from 'react-icons/lu';
+import { logger } from '../../../core/utils/logger';
 
 interface CommentListProps {
   forumId: string;
@@ -24,7 +25,7 @@ export function CommentList({ forumId, comments, loading, repository }: CommentL
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newComment.trim() || !user) return;
 
     setSubmitting(true);
@@ -32,7 +33,7 @@ export function CommentList({ forumId, comments, loading, repository }: CommentL
       await repository.addComment(forumId, newComment, user.uid);
       setNewComment('');
     } catch (error) {
-      console.error('Error adding comment:', error);
+      logger.error('Error adding comment:', error);
     } finally {
       setSubmitting(false);
     }
