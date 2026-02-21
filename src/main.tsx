@@ -1,15 +1,19 @@
-import React, { lazy, Suspense } from 'react'
+import React, { lazy, Suspense, useMemo } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './pages/App'
 import './index.css'
 import { ThemeProvider } from './context/ThemeContext'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ToastProvider } from './core/components/Toast/ToastProvider'
-import { AuthProvider, FirebaseAuthService } from './core/auth'
+import { AuthProvider, FirebaseAuthService, useAuth } from './core/auth'
 import { ErrorBoundary } from './core/components/ErrorBoundary/ErrorBoundary'
 import { FeatureFlagProvider } from './core/feature-flags'
 import { FirebaseFeatureFlagRepository } from './core/feature-flags'
 import { auth } from './firebase'
+import {
+  FirebaseModeratorRepository,
+  useModeratorApplications,
+} from './features/moderator'
 
 // Lazy load pages for code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -23,6 +27,7 @@ const QuizesPage = lazy(() => import('./features/collections/pages/QuizesPage'))
 const VideosPage = lazy(() => import('./features/collections/pages/VideosPage'))
 const QuizManagerPage = lazy(() => import('./features/quiz/pages/QuizManagerPage'))
 const FeatureFlagsPage = lazy(() => import('./features/feature-flags/pages/FeatureFlagsPage'))
+const ModeratorApplicationsPageLazy = lazy(() => import('./features/moderator/pages/ModeratorApplicationsPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -30,6 +35,29 @@ const PageLoader = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
   </div>
 )
+
+/**
+ * Wrapper component that injects the hook data into ModeratorApplicationsPage.
+ * This keeps the page component purely presentational (props-only).
+ */
+const ModeratorApplicationsPageWrapper = () => {
+  const { user } = useAuth();
+  const repo = useMemo(() => new FirebaseModeratorRepository(), []);
+  const { applications, loading, error, reviewApplication } = useModeratorApplications(
+    repo,
+    user?.uid ?? null,
+  );
+
+  return (
+    <ModeratorApplicationsPageLazy
+      applications={applications}
+      loading={loading}
+      error={error}
+      currentUid={user?.uid ?? ''}
+      onReview={reviewApplication}
+    />
+  );
+};
 
 const router = createBrowserRouter([
   {
@@ -105,6 +133,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <FeatureFlagsPage />
+          </Suspense>
+        )
+      },
+      {
+        path: "moderator-applications",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModeratorApplicationsPageWrapper />
           </Suspense>
         )
       },

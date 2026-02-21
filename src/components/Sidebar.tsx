@@ -10,6 +10,7 @@ import {
   LuChevronRight,
   LuLayoutDashboard,
   LuFlag,
+  LuUsers,
 } from "react-icons/lu";
 
 interface NavItem {
@@ -157,6 +158,11 @@ const Sidebar: React.FC = () => {
           name="Feature Flags"
           path="/feature-flags"
           icon={<LuFlag />}
+        />
+        <SideBarItem
+          name="Moderator Applications"
+          path="/moderator-applications"
+          icon={<LuUsers />}
         />
       </div>
 
