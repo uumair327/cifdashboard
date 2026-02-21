@@ -2,6 +2,8 @@
 
 > Admin dashboard for the [GuardianCare](https://github.com/uumair327/guardiancare) child safety Flutter application.
 
+**Live:** [umairansari.in/cifdashboard](https://umairansari.in/cifdashboard/) · [uumair327.github.io/cifdashboard](https://uumair327.github.io/cifdashboard/)
+
 A modern web dashboard built with **React**, **TypeScript**, and **Vite** for managing GuardianCare's Firestore content — collections, forums, quizzes, and media.
 
 ## Features
@@ -111,6 +113,14 @@ Configure in **Settings → Secrets and variables → Actions**:
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID |
 | `VITE_FIREBASE_APP_ID` | Firebase Web app ID |
 | `VITE_FIREBASE_MEASUREMENT_ID` | Google Analytics ID |
+
+### Firebase Authorized Domains
+
+Both deployment domains must be whitelisted in **Firebase Console → Authentication → Settings → Authorized domains**:
+
+- `umairansari.in` (custom domain)
+- `uumair327.github.io` (GitHub Pages default)
+- `localhost` (local development)
 
 ## Contributing
 
