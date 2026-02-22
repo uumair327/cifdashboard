@@ -9,6 +9,7 @@ import {
     ModeratorApplication,
     ReviewApplicationPayload,
     SubmitApplicationPayload,
+    ToggleModeratorPayload,
 } from '../entities/ModeratorApplication';
 
 export interface IModeratorRepository {
@@ -36,10 +37,17 @@ export interface IModeratorRepository {
     getByApplicantUid(uid: string): Promise<ModeratorApplication | null>;
 
     /**
-     * Admin reviews (approves/rejects) an application.
+     * Admin reviews (approves/rejects) a pending application.
      * Also sets `role` on the Firestore `users/{uid}` document when approved.
      */
     reviewApplication(id: string, review: ReviewApplicationPayload): Promise<ModeratorApplication>;
+
+    /**
+     * Admin toggles an approved moderator's access on or off.
+     *   approved  → suspended  (revoke)  — sets users/{uid}.role = null
+     *   suspended → approved   (restore) — sets users/{uid}.role = 'moderator'
+     */
+    toggleModeratorAccess(id: string, payload: ToggleModeratorPayload): Promise<ModeratorApplication>;
 
     /**
      * Subscribe to real-time updates on all applications (admin dashboard).

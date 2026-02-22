@@ -8,6 +8,7 @@ export type {
     ApplicationStatus,
     SubmitApplicationPayload,
     ReviewApplicationPayload,
+    ToggleModeratorPayload,
 } from './domain/entities/ModeratorApplication';
 export type { IModeratorRepository } from './domain/repositories/IModeratorRepository';
 

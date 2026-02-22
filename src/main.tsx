@@ -43,7 +43,7 @@ const PageLoader = () => (
 const ModeratorApplicationsPageWrapper = () => {
   const { user } = useAuth();
   const repo = useMemo(() => new FirebaseModeratorRepository(), []);
-  const { applications, loading, error, reviewApplication } = useModeratorApplications(
+  const { applications, loading, error, reviewApplication, toggleModeratorAccess } = useModeratorApplications(
     repo,
     user?.uid ?? null,
   );
@@ -55,6 +55,7 @@ const ModeratorApplicationsPageWrapper = () => {
       error={error}
       currentUid={user?.uid ?? ''}
       onReview={reviewApplication}
+      onToggle={toggleModeratorAccess}
     />
   );
 };

@@ -66,9 +66,12 @@ const App: React.FC = () => {
   // ── Access Gate ──────────────────────────────────────────────────────────
   // A user has dashboard access if:
   //   1. Their role in Firestore users doc is 'admin' or 'moderator', OR
-  //   2. Their moderator application has been approved (authoritative fallback in
-  //      case the users/{uid} role write is still in flight / was blocked by rules)
-  const hasRoleAccess = userRole === 'admin' || userRole === 'moderator';
+  //   2. Their moderator application status is 'approved' (not 'suspended')
+  //      — this is the authoritative fallback when the users/{uid} role write
+  //        is still in-flight or was blocked by rules.
+  // Suspended moderators (role=null, status='suspended') are explicitly blocked.
+  const isSuspended = myApplication?.status === 'suspended';
+  const hasRoleAccess = (userRole === 'admin' || userRole === 'moderator') && !isSuspended;
   const hasApplicationAccess = myApplication?.status === 'approved';
   const hasAccess = hasRoleAccess || hasApplicationAccess;
 

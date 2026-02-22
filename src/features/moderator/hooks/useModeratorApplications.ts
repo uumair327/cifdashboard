@@ -17,6 +17,7 @@ import {
     ModeratorApplication,
     ReviewApplicationPayload,
     SubmitApplicationPayload,
+    ToggleModeratorPayload,
 } from '../domain/entities/ModeratorApplication';
 import { logger } from '../../../core/utils/logger';
 
@@ -36,8 +37,10 @@ export interface UseModeratorResult {
     error: string | null;
     /** Submit a new moderator application. */
     submitApplication: (payload: SubmitApplicationPayload) => Promise<void>;
-    /** Admin: approve or reject an application. */
+    /** Admin: approve or reject a pending application. */
     reviewApplication: (id: string, review: ReviewApplicationPayload) => Promise<void>;
+    /** Admin: toggle an approved moderator's access on/off (approved ↔ suspended). */
+    toggleModeratorAccess: (id: string, payload: ToggleModeratorPayload) => Promise<void>;
     /** Refresh all data (admin use). */
     refresh: () => Promise<void>;
 }
@@ -184,6 +187,22 @@ export function useModeratorApplications(
         [repository],
     );
 
+    // ── Toggle access ───────────────────────────────────────────────────────
+    const toggleModeratorAccess = useCallback(
+        async (id: string, toggle: ToggleModeratorPayload) => {
+            setError(null);
+            try {
+                await repository.toggleModeratorAccess(id, toggle);
+                // Real-time listener auto-updates
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Failed to toggle moderator access';
+                setError(msg);
+                throw err;
+            }
+        },
+        [repository],
+    );
+
     return {
         applications,
         myApplication,
@@ -192,6 +211,7 @@ export function useModeratorApplications(
         error,
         submitApplication,
         reviewApplication,
+        toggleModeratorAccess,
         refresh,
     };
 }

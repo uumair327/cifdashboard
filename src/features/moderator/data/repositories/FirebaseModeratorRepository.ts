@@ -27,6 +27,7 @@ import {
     ModeratorApplication,
     ReviewApplicationPayload,
     SubmitApplicationPayload,
+    ToggleModeratorPayload,
 } from '../../domain/entities/ModeratorApplication';
 import { DashboardErrors } from '../../../../core/errors/DashboardError';
 import { logger } from '../../../../core/utils/logger';
@@ -183,6 +184,71 @@ export class FirebaseModeratorRepository implements IModeratorRepository {
             logger.error(`[ModeratorRepo] reviewApplication(${id}) failed:`, error);
             throw DashboardErrors.operationFailed(
                 'review moderator application',
+                error instanceof Error ? error : undefined,
+            );
+        }
+    }
+
+    // ── Toggle moderator access ───────────────────────────────────────────────
+
+    async toggleModeratorAccess(
+        id: string,
+        payload: ToggleModeratorPayload,
+    ): Promise<ModeratorApplication> {
+        try {
+            const docRef = doc(db, COLLECTION, id);
+            const snap = await getDoc(docRef);
+
+            if (!snap.exists()) {
+                throw DashboardErrors.notFound('moderator_applications', id);
+            }
+
+            const current = snap.data();
+
+            // Only approved or suspended applications can be toggled
+            if (current.status !== 'approved' && current.status !== 'suspended') {
+                throw DashboardErrors.operationFailed(
+                    `toggle moderator access (invalid status: ${current.status})`,
+                );
+            }
+
+            const newStatus = current.status === 'approved' ? 'suspended' : 'approved';
+            const newRole = newStatus === 'approved' ? 'moderator' : null;
+            const now = Timestamp.now();
+
+            // Step 1: Update the application document status
+            await updateDoc(docRef, {
+                status: newStatus,
+                reviewedBy: payload.adminUid,
+                reviewedAt: now,
+                updatedAt: now,
+            });
+
+            logger.info(
+                `[ModeratorRepo] Toggled ${current.applicantUid}: ${current.status} → ${newStatus}`,
+            );
+
+            // Step 2: Update users/{uid}.role (best-effort, non-fatal)
+            try {
+                const userDocRef = doc(db, 'users', current.applicantUid);
+                await setDoc(userDocRef, { role: newRole }, { merge: true });
+                logger.info(
+                    `[ModeratorRepo] Updated role for ${current.applicantUid}: ${newRole ?? 'null'}`,
+                );
+            } catch (roleError) {
+                logger.warn(
+                    `[ModeratorRepo] Could not update users/${current.applicantUid} role.`,
+                    'Access is still controlled by application status. Error:',
+                    roleError,
+                );
+            }
+
+            const updatedSnap = await getDoc(docRef);
+            return docToEntity(updatedSnap.id, updatedSnap.data()!);
+        } catch (error) {
+            logger.error(`[ModeratorRepo] toggleModeratorAccess(${id}) failed:`, error);
+            throw DashboardErrors.operationFailed(
+                'toggle moderator access',
                 error instanceof Error ? error : undefined,
             );
         }

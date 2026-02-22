@@ -11,8 +11,13 @@
 
 import { BaseEntity } from '@/core/types';
 
-/** Possible states a moderator application can be in. */
-export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
+/** Possible states a moderator application can be in.
+ *  pending   → awaiting admin review
+ *  approved  → moderator access active
+ *  rejected  → access denied
+ *  suspended → access temporarily disabled by an admin
+ */
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
 /**
  * Core domain entity stored in Firestore.
@@ -69,9 +74,15 @@ export type SubmitApplicationPayload = Pick<
   'applicantUid' | 'applicantEmail' | 'applicantName' | 'applicantPhotoURL' | 'reason' | 'experience'
 >;
 
-/** Payload an admin sends when reviewing an application. */
+/** Payload an admin sends when reviewing (first-time approval/rejection). */
 export interface ReviewApplicationPayload {
   status: 'approved' | 'rejected';
   reviewedBy: string;
   reviewNote?: string;
+}
+
+/** Payload used when toggling an already-approved moderator's access on/off. */
+export interface ToggleModeratorPayload {
+  /** UID of the admin performing the action */
+  adminUid: string;
 }

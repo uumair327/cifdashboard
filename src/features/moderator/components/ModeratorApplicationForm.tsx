@@ -7,7 +7,7 @@
 
 import { type FC, useState } from 'react';
 import { useAuth } from '../../../core/auth';
-import { LuSend, LuLoader2, LuClock, LuCheckCircle, LuXCircle } from 'react-icons/lu';
+import { LuSend, LuLoader2, LuClock, LuCheckCircle, LuXCircle, LuShieldOff } from 'react-icons/lu';
 import type { ModeratorApplication, SubmitApplicationPayload } from '../domain/entities/ModeratorApplication';
 
 interface Props {
@@ -83,10 +83,17 @@ const ModeratorApplicationForm: FC<Props> = ({ myApplication, loading, error, on
                             </div>
                         )}
 
+                        {myApplication.status === 'suspended' && (
+                            <div className="mx-auto w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                                <LuShieldOff className="w-8 h-8 text-slate-500 dark:text-slate-400" />
+                            </div>
+                        )}
+
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                             {myApplication.status === 'pending' && 'Application Under Review'}
                             {myApplication.status === 'approved' && 'Application Approved!'}
                             {myApplication.status === 'rejected' && 'Application Not Approved'}
+                            {myApplication.status === 'suspended' && 'Access Suspended'}
                         </h2>
 
                         <p className="text-slate-600 dark:text-slate-400">
@@ -96,6 +103,8 @@ const ModeratorApplicationForm: FC<Props> = ({ myApplication, loading, error, on
                                 'Congratulations! You now have moderator access. Please refresh the page to access the dashboard.'}
                             {myApplication.status === 'rejected' &&
                                 'Unfortunately, your application was not approved at this time.'}
+                            {myApplication.status === 'suspended' &&
+                                'Your moderator access has been temporarily suspended by an admin. Please contact an administrator for more information.'}
                         </p>
 
                         {myApplication.reviewNote && (
@@ -120,9 +129,11 @@ const ModeratorApplicationForm: FC<Props> = ({ myApplication, loading, error, on
                                 <p className="text-slate-500 dark:text-slate-400">Status</p>
                                 <span
                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${myApplication.status === 'pending'
-                                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                                            : myApplication.status === 'approved'
-                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                                        : myApplication.status === 'approved'
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            : myApplication.status === 'suspended'
+                                                ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                         }`}
                                 >
