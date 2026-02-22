@@ -64,8 +64,13 @@ const App: React.FC = () => {
   }
 
   // ── Access Gate ──────────────────────────────────────────────────────────
-  // If user is NOT an admin or approved moderator, show the application form
-  const hasAccess = userRole === 'admin' || userRole === 'moderator';
+  // A user has dashboard access if:
+  //   1. Their role in Firestore users doc is 'admin' or 'moderator', OR
+  //   2. Their moderator application has been approved (authoritative fallback in
+  //      case the users/{uid} role write is still in flight / was blocked by rules)
+  const hasRoleAccess = userRole === 'admin' || userRole === 'moderator';
+  const hasApplicationAccess = myApplication?.status === 'approved';
+  const hasAccess = hasRoleAccess || hasApplicationAccess;
 
   if (user && !hasAccess) {
     return (

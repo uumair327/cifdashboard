@@ -154,14 +154,27 @@ export class FirebaseModeratorRepository implements IModeratorRepository {
                 updatedAt: now,
             };
 
+            // Step 1: Update the application status
             await updateDoc(docRef, updateData);
+            logger.info(`[ModeratorRepo] Application ${id} set to ${review.status}`);
 
-            // If approved → set the user's role to 'moderator' in the users collection
+            // Step 2: If approved, grant 'moderator' role on the users doc.
+            // This is a best-effort write — even if it fails (e.g. rules not yet deployed),
+            // the application.status === 'approved' still grants access via the App-level check.
             if (review.status === 'approved') {
                 const existingData = snap.data();
                 const userDocRef = doc(db, 'users', existingData.applicantUid);
-                await setDoc(userDocRef, { role: 'moderator' }, { merge: true });
-                logger.info(`[ModeratorRepo] Granted moderator role to ${existingData.applicantUid}`);
+                try {
+                    await setDoc(userDocRef, { role: 'moderator' }, { merge: true });
+                    logger.info(`[ModeratorRepo] Granted moderator role to ${existingData.applicantUid}`);
+                } catch (roleError) {
+                    // Non-fatal: approval is persisted, application.status drives access
+                    logger.warn(
+                        `[ModeratorRepo] Could not write role to users/${existingData.applicantUid}.`,
+                        `Check Firestore rules for users collection. Error:`,
+                        roleError,
+                    );
+                }
             }
 
             const updatedSnap = await getDoc(docRef);
