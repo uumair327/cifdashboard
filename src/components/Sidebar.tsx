@@ -11,6 +11,7 @@ import {
   LuLayoutDashboard,
   LuFlag,
   LuUsers,
+  LuShieldCheck,
 } from "react-icons/lu";
 
 interface NavItem {
@@ -18,19 +19,35 @@ interface NavItem {
   path: string;
   icon: React.ReactNode;
   badge?: string;
+  /** If true, only renders when the user has the 'admin' role */
+  adminOnly?: boolean;
 }
 
-const SideBarItem: React.FC<NavItem> = ({
-  name,
-  path,
-  icon,
-  badge,
-}) => {
+interface SidebarProps {
+  /** Role from Firestore users collection. Undefined while loading. */
+  userRole: string | null;
+}
+
+const SideBarItem: React.FC<NavItem> = ({ name, path, icon, badge }) => {
   const location = useLocation();
   const isSelected = location.pathname === path;
 
-  const content = (
-    <>
+  return (
+    <Link
+      to={path}
+      className={`
+        group
+        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+        transition-all duration-200 ease-in-out
+        ${isSelected
+          ? 'bg-blue-50 dark:bg-blue-950/30 border-l-2 border-blue-600 dark:border-blue-400'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 border-l-2 border-transparent'
+        }
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900
+        active:scale-[0.98]
+      `}
+      aria-current={isSelected ? "page" : undefined}
+    >
       {/* Icon */}
       <span className={`
         flex-shrink-0 w-5 h-5 transition-colors duration-200
@@ -63,67 +80,28 @@ const SideBarItem: React.FC<NavItem> = ({
       ) : (
         <LuChevronRight className="flex-shrink-0 w-4 h-4 text-slate-400 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
       )}
-    </>
-  );
-
-  return (
-    <Link
-      to={path}
-      className={`
-        group
-        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-        transition-all duration-200 ease-in-out
-        ${isSelected
-          ? 'bg-blue-50 dark:bg-blue-950/30 border-l-2 border-blue-600 dark:border-blue-400'
-          : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 border-l-2 border-transparent'
-        }
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900
-        active:scale-[0.98]
-      `}
-      aria-current={isSelected ? "page" : undefined}
-    >
-      {content}
     </Link>
   );
 };
 
-const Sidebar: React.FC = () => {
-  const navItems: NavItem[] = [
-    {
-      name: "Overview",
-      path: "/",
-      icon: <LuLayoutDashboard />,
-    },
-    {
-      name: "Carousel Items",
-      path: "/carousel-items",
-      icon: <LuImage />,
-    },
-    {
-      name: "Home Images",
-      path: "/home-images",
-      icon: <LuImagePlus />,
-    },
-    {
-      name: "Forum",
-      path: "/forum",
-      icon: <LuMessageSquare />,
-    },
-    {
-      name: "Learn",
-      path: "/learn",
-      icon: <LuGraduationCap />,
-    },
-    {
-      name: "Quizzes",
-      path: "/quizes",
-      icon: <LuClipboardList />,
-    },
-    {
-      name: "Videos",
-      path: "/videos",
-      icon: <LuVideo />,
-    },
+const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
+  const isAdmin = userRole === 'admin';
+
+  // Items visible to both admins and moderators
+  const commonItems: NavItem[] = [
+    { name: "Overview", path: "/", icon: <LuLayoutDashboard /> },
+    { name: "Carousel Items", path: "/carousel-items", icon: <LuImage /> },
+    { name: "Home Images", path: "/home-images", icon: <LuImagePlus /> },
+    { name: "Forum", path: "/forum", icon: <LuMessageSquare /> },
+    { name: "Learn", path: "/learn", icon: <LuGraduationCap /> },
+    { name: "Quizzes", path: "/quizes", icon: <LuClipboardList /> },
+    { name: "Videos", path: "/videos", icon: <LuVideo /> },
+  ];
+
+  // Items visible only to admins
+  const adminItems: NavItem[] = [
+    { name: "Feature Flags", path: "/feature-flags", icon: <LuFlag /> },
+    { name: "Moderator Applications", path: "/moderator-applications", icon: <LuUsers /> },
   ];
 
   return (
@@ -137,7 +115,7 @@ const Sidebar: React.FC = () => {
 
       {/* Navigation Items */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => (
+        {commonItems.map((item) => (
           <SideBarItem key={item.path} {...item} />
         ))}
 
@@ -149,24 +127,30 @@ const Sidebar: React.FC = () => {
           icon={<LuClipboardList />}
         />
 
-        {/* System section */}
+        {/* Admin-only System section */}
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+            <p className="px-3 mb-1 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Admin
+            </p>
+            {adminItems.map((item) => (
+              <SideBarItem key={item.path} {...item} />
+            ))}
+          </>
+        )}
+
+        {/* Role badge at the bottom of the nav */}
         <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
-        <p className="px-3 mb-1 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          System
-        </p>
-        <SideBarItem
-          name="Feature Flags"
-          path="/feature-flags"
-          icon={<LuFlag />}
-        />
-        <SideBarItem
-          name="Moderator Applications"
-          path="/moderator-applications"
-          icon={<LuUsers />}
-        />
+        <div className="px-3 py-2 flex items-center gap-2">
+          <LuShieldCheck className={`w-4 h-4 flex-shrink-0 ${isAdmin ? 'text-blue-500' : 'text-emerald-500'}`} />
+          <span className={`text-xs font-semibold capitalize ${isAdmin ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            {userRole ?? 'moderator'}
+          </span>
+        </div>
       </div>
 
-      {/* Footer (optional) */}
+      {/* Footer */}
       <div className="px-3 py-4 border-t border-slate-200 dark:border-slate-800">
         <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
           CIF Guardian Care v1.0

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../core/auth";
 import { LuLogOut, LuMenu, LuX, LuSun, LuMoon } from "react-icons/lu";
@@ -9,8 +9,8 @@ import {
 } from "../features/moderator";
 import ModeratorApplicationForm from "../features/moderator/components/ModeratorApplicationForm";
 
-// Lazy load components
-const Sidebar = lazy(() => import("../components/Sidebar"));
+// Lazy load components — Sidebar is NOT lazy so it can receive the role prop synchronously
+import Sidebar from "../components/Sidebar";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-full min-h-[200px]">
@@ -180,9 +180,7 @@ const App: React.FC = () => {
           `}
         >
           <div className="p-3 md:p-4 h-full">
-            <Suspense fallback={<LoadingSpinner />}>
-              <Sidebar />
-            </Suspense>
+            <Sidebar userRole={userRole} />
           </div>
         </div>
 
