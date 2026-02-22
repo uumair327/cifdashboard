@@ -19,7 +19,7 @@ import {
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
-const CarouselItemsPage = lazy(() => import('./features/collections/pages/CarouselItemsPage'))
+const CarouselManagerPage = lazy(() => import('./features/carousel/pages/CarouselManagerPage'))
 const HomeImagesPage = lazy(() => import('./features/collections/pages/HomeImagesPage'))
 const ForumPage = lazy(() => import('./features/forum/pages/ForumManagementPage'))
 const LearnPage = lazy(() => import('./features/collections/pages/LearnPage'))
@@ -77,7 +77,7 @@ const router = createBrowserRouter([
         path: "carousel-items",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <CarouselItemsPage />
+            <CarouselManagerPage />
           </Suspense>
         )
       },
