@@ -50,6 +50,24 @@ export interface IModeratorRepository {
     ): () => void;
 
     /**
+     * Subscribe to real-time role changes for a specific user.
+     * Fires immediately with the current role and on every subsequent change.
+     */
+    subscribeToUserRole(
+        uid: string,
+        onRole: (role: string | null) => void,
+    ): () => void;
+
+    /**
+     * Subscribe to real-time updates on a single user's own application doc.
+     * Fires immediately and on every change to that document.
+     */
+    subscribeToMyApplication(
+        uid: string,
+        onData: (app: ModeratorApplication | null) => void,
+    ): () => void;
+
+    /**
      * Check whether a UID has the 'admin' or 'moderator' role
      * in the Firestore `users` collection.
      */

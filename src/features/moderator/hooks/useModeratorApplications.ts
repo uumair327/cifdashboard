@@ -3,9 +3,17 @@
  *
  * Encapsulates all moderator-related state and side-effects.
  * Depends on IModeratorRepository (injected) → testable and backend-agnostic.
+ *
+ * Key design:
+ *   - `userRole` uses a real-time Firestore listener on `users/{uid}`
+ *     so it updates **instantly** when an admin approves/rejects.
+ *   - `myApplication` uses a real-time listener on `moderator_applications/{uid}`
+ *     so the applicant's status card updates live.
+ *   - The collection-wide `subscribe()` is only called when the user is an admin,
+ *     avoiding Firestore permission errors for regular users.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IModeratorRepository } from '../domain/repositories/IModeratorRepository';
 import {
     ModeratorApplication,
@@ -46,30 +54,81 @@ export function useModeratorApplications(
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // ── Fetch user role ─────────────────────────────────────────────────────
-    const fetchRole = useCallback(async () => {
-        if (!currentUid) return;
-        try {
-            const role = await repository.getUserRole(currentUid);
+    // Track whether we've received the first role snapshot
+    const roleLoadedRef = useRef(false);
+    const appLoadedRef = useRef(false);
+
+    // ── Real-time listener: user role ────────────────────────────────────────
+    useEffect(() => {
+        if (!currentUid) {
+            setUserRole(null);
+            setLoading(false);
+            return;
+        }
+
+        roleLoadedRef.current = false;
+
+        const unsubscribe = repository.subscribeToUserRole(currentUid, (role) => {
             setUserRole(role);
-        } catch (err) {
-            logger.error('[useModeratorApplications] fetchRole error:', err);
-        }
+
+            if (!roleLoadedRef.current) {
+                roleLoadedRef.current = true;
+                // Check if both listeners have fired at least once
+                if (appLoadedRef.current) {
+                    setLoading(false);
+                }
+            }
+        });
+
+        return unsubscribe;
     }, [currentUid, repository]);
 
-    // ── Fetch my own application ────────────────────────────────────────────
-    const fetchMyApplication = useCallback(async () => {
-        if (!currentUid) return;
-        try {
-            const app = await repository.getByApplicantUid(currentUid);
+    // ── Real-time listener: my application ──────────────────────────────────
+    useEffect(() => {
+        if (!currentUid) {
+            setMyApplication(null);
+            return;
+        }
+
+        appLoadedRef.current = false;
+
+        const unsubscribe = repository.subscribeToMyApplication(currentUid, (app) => {
             setMyApplication(app);
-        } catch (err) {
-            logger.error('[useModeratorApplications] fetchMyApplication error:', err);
-        }
+
+            if (!appLoadedRef.current) {
+                appLoadedRef.current = true;
+                if (roleLoadedRef.current) {
+                    setLoading(false);
+                }
+            }
+        });
+
+        return unsubscribe;
     }, [currentUid, repository]);
 
-    // ── Fetch all (admin) ───────────────────────────────────────────────────
+    // ── Real-time listener: all applications (admin only) ───────────────────
+    useEffect(() => {
+        // Only subscribe to all applications if user is admin
+        // This avoids Firestore permission errors for regular users
+        if (userRole !== 'admin') {
+            setApplications([]);
+            return;
+        }
+
+        const unsubscribe = repository.subscribe(
+            (items) => setApplications(items),
+            (err) => {
+                logger.error('[useModeratorApplications] subscribe error:', err);
+                setError(err.message);
+            },
+        );
+
+        return unsubscribe;
+    }, [repository, userRole]);
+
+    // ── Fetch all (admin) for refresh ────────────────────────────────────────
     const fetchAll = useCallback(async () => {
+        if (userRole !== 'admin') return;
         try {
             const items = await repository.getAll();
             setApplications(items);
@@ -77,31 +136,15 @@ export function useModeratorApplications(
             logger.error('[useModeratorApplications] fetchAll error:', err);
             setError(err instanceof Error ? err.message : 'Failed to load applications');
         }
-    }, [repository]);
+    }, [repository, userRole]);
 
-    // ── Refresh all data ────────────────────────────────────────────────────
+    // ── Refresh ──────────────────────────────────────────────────────────────
     const refresh = useCallback(async () => {
-        setLoading(true);
         setError(null);
-        await Promise.all([fetchRole(), fetchMyApplication(), fetchAll()]);
-        setLoading(false);
-    }, [fetchRole, fetchMyApplication, fetchAll]);
+        await fetchAll();
+    }, [fetchAll]);
 
-    // ── Initial load ────────────────────────────────────────────────────────
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
-
-    // ── Real-time subscription (admin) ──────────────────────────────────────
-    useEffect(() => {
-        const unsubscribe = repository.subscribe(
-            (items) => setApplications(items),
-            (err) => setError(err.message),
-        );
-        return unsubscribe;
-    }, [repository]);
-
-    // ── Submit ──────────────────────────────────────────────────────────────
+    // ── Submit ───────────────────────────────────────────────────────────────
     const submitApplication = useCallback(
         async (payload: SubmitApplicationPayload) => {
             setError(null);
@@ -117,21 +160,20 @@ export function useModeratorApplications(
         [repository],
     );
 
-    // ── Review ──────────────────────────────────────────────────────────────
+    // ── Review ───────────────────────────────────────────────────────────────
     const reviewApplication = useCallback(
         async (id: string, review: ReviewApplicationPayload) => {
             setError(null);
             try {
                 await repository.reviewApplication(id, review);
-                // Refresh to get updated data
-                await fetchAll();
+                // Real-time listener will automatically update the list
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Failed to review application';
                 setError(msg);
                 throw err;
             }
         },
-        [repository, fetchAll],
+        [repository],
     );
 
     return {

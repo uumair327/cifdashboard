@@ -193,6 +193,57 @@ export class FirebaseModeratorRepository implements IModeratorRepository {
         );
     }
 
+    // ── Real-time: user role ──────────────────────────────────────────────────
+
+    subscribeToUserRole(
+        uid: string,
+        onRole: (role: string | null) => void,
+    ): () => void {
+        const userDocRef = doc(db, 'users', uid);
+
+        return onSnapshot(
+            userDocRef,
+            (snap) => {
+                if (!snap.exists()) {
+                    onRole(null);
+                    return;
+                }
+                const role = (snap.data().role as string) ?? null;
+                logger.debug(`[ModeratorRepo] Role update for ${uid}: ${role}`);
+                onRole(role);
+            },
+            (error) => {
+                logger.error(`[ModeratorRepo] subscribeToUserRole error:`, error);
+                onRole(null);
+            },
+        );
+    }
+
+    // ── Real-time: my application ───────────────────────────────────────────
+
+    subscribeToMyApplication(
+        uid: string,
+        onData: (app: ModeratorApplication | null) => void,
+    ): () => void {
+        // Doc ID is the applicant UID
+        const appDocRef = doc(db, COLLECTION, uid);
+
+        return onSnapshot(
+            appDocRef,
+            (snap) => {
+                if (!snap.exists()) {
+                    onData(null);
+                    return;
+                }
+                onData(docToEntity(snap.id, snap.data()));
+            },
+            (error) => {
+                logger.error(`[ModeratorRepo] subscribeToMyApplication error:`, error);
+                onData(null);
+            },
+        );
+    }
+
     // ── Role check ────────────────────────────────────────────────────────────
 
     async getUserRole(uid: string): Promise<string | null> {
